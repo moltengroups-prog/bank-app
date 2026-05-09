@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import logo from '../assets/logos/logo.png';
 import imgErica from '../assets/images/btn-erica-red.jpeg';
 import imgBanner from '../assets/images/banner-rate-reduction.jpeg';
@@ -40,7 +41,7 @@ const IconSearch = () => (
   </svg>
 );
 const IconChevronRight = () => (
-  <span className="text-gray-400 text-xl leading-none">›</span>
+  <span className="text-gray-400 text-xl leading-none">&#8250;</span>
 );
 const IconChevronUp = ({ flipped }) => (
   <svg className={`w-5 h-5 text-gray-500 transition-transform ${flipped ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -74,29 +75,26 @@ const IconPie = () => (
 );
 
 function DashboardPage() {
-  const [activeTab, setActiveTab]         = useState('accounts');
-  const [bankingOpen, setBankingOpen]     = useState(true);
+  const navigate = useNavigate();
+  const [bankingOpen, setBankingOpen] = useState(true);
 
   return (
     <div className="flex flex-col h-screen bg-gray-100 font-sans">
 
-      {/* ════════════════════════════════
+      {/* ══════════════════════════════════
           FIXED HEADER
-      ════════════════════════════════ */}
+      ══════════════════════════════════ */}
       <div className="fixed top-0 left-0 right-0 z-50 bg-white shadow-sm">
 
         {/* Top bar */}
         <div className="flex items-center justify-between px-4 py-3">
-          {/* Hamburger / Menu */}
-          <button className="flex flex-col items-center gap-1">
+          <button type="button" className="flex flex-col items-center gap-1">
             <IconHamburger />
             <span className="text-[10px] font-medium text-gray-600">Menu</span>
           </button>
 
-          {/* Right actions */}
           <div className="flex items-end gap-5">
-            {/* Inbox */}
-            <button className="flex flex-col items-center gap-0.5">
+            <button type="button" className="flex flex-col items-center gap-0.5">
               <div className="relative">
                 <IconEnvelope />
                 <span className="absolute -top-1.5 -right-1.5 bg-[#002D72] text-white text-[8px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
@@ -105,15 +103,11 @@ function DashboardPage() {
               </div>
               <span className="text-[10px] font-medium text-gray-600">Inbox</span>
             </button>
-
-            {/* Products */}
-            <button className="flex flex-col items-center gap-0.5">
+            <button type="button" className="flex flex-col items-center gap-0.5">
               <IconCart />
               <span className="text-[10px] font-medium text-gray-600">Products</span>
             </button>
-
-            {/* Log Out */}
-            <button className="flex flex-col items-center gap-0.5">
+            <button type="button" className="flex flex-col items-center gap-0.5">
               <IconLogOut />
               <span className="text-[10px] font-medium text-gray-600">Log Out</span>
             </button>
@@ -122,25 +116,25 @@ function DashboardPage() {
 
         {/* Sub-nav tabs */}
         <div className="flex">
-          {['accounts', 'dashboard'].map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`flex-1 py-3 text-sm capitalize tracking-wide transition-colors ${
-                activeTab === tab
-                  ? 'font-bold text-red-600 border-b-2 border-red-600'
-                  : 'font-medium text-gray-400 border-b-2 border-transparent'
-              }`}
-            >
-              {tab.charAt(0).toUpperCase() + tab.slice(1)}
-            </button>
-          ))}
+          <button
+            type="button"
+            className="flex-1 py-3 text-sm font-bold text-red-600 border-b-2 border-red-600 tracking-wide"
+          >
+            Accounts
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate('/main-dashboard')}
+            className="flex-1 py-3 text-sm font-medium text-gray-400 border-b-2 border-transparent tracking-wide"
+          >
+            Dashboard
+          </button>
         </div>
       </div>
 
-      {/* ════════════════════════════════
+      {/* ══════════════════════════════════
           SCROLLABLE BODY
-      ════════════════════════════════ */}
+      ══════════════════════════════════ */}
       <div className="flex-1 overflow-y-auto pt-[104px] pb-20">
 
         {/* ── Erica search bar ── */}
@@ -159,20 +153,20 @@ function DashboardPage() {
 
         {/* ── Greeting card ── */}
         <div className="mx-4 mb-4 bg-white rounded-2xl shadow-sm overflow-hidden">
-          <button className="w-full flex items-center justify-between px-5 py-4 border-b border-gray-100 active:bg-gray-50">
+          <button type="button" className="w-full flex items-center justify-between px-5 py-4 border-b border-gray-100 active:bg-gray-50">
             <span className="font-bold text-gray-900 text-base">Hello, Sutrina</span>
             <IconChevronRight />
           </button>
-          <button className="w-full flex items-start justify-between px-5 py-4 border-b border-gray-100 active:bg-gray-50">
+          <button type="button" className="w-full flex items-start justify-between px-5 py-4 border-b border-gray-100 active:bg-gray-50">
             <div className="text-left pr-3">
-              <p className="font-bold text-gray-900 text-base">Bank of Molten Life Plan®</p>
+              <p className="font-bold text-gray-900 text-base">Bank of Molten Life Plan&#174;</p>
               <p className="text-gray-500 text-sm mt-1 leading-relaxed">
                 Your next steps and new features are a tap away.
               </p>
             </div>
             <IconChevronRight />
           </button>
-          <button className="w-full flex items-center justify-between px-5 py-4 active:bg-gray-50">
+          <button type="button" className="w-full flex items-center justify-between px-5 py-4 active:bg-gray-50">
             <span className="text-gray-800 text-base font-medium">My Rewards</span>
             <IconChevronRight />
           </button>
@@ -180,14 +174,13 @@ function DashboardPage() {
 
         {/* ── Banking card ── */}
         <div className="mx-4 mb-4 bg-white rounded-2xl shadow-sm overflow-hidden">
-          {/* Red / navy accent bar */}
           <div className="h-1.5 flex">
             <div className="w-1/2 bg-red-600" />
             <div className="w-1/2 bg-[#002D72]" />
           </div>
 
-          {/* Section header */}
           <button
+            type="button"
             onClick={() => setBankingOpen(!bankingOpen)}
             className="w-full flex items-center justify-between px-5 py-4 border-b border-gray-100"
           >
@@ -197,7 +190,6 @@ function DashboardPage() {
 
           {bankingOpen && (
             <>
-              {/* Bank brand + FDIC */}
               <div className="px-5 pt-4 pb-3 border-b border-gray-100">
                 <div className="flex items-center gap-2 mb-1.5">
                   <img src={logo} alt="Bank of Molten" className="h-5 w-auto" />
@@ -213,15 +205,22 @@ function DashboardPage() {
                 </div>
               </div>
 
-              {/* Account rows */}
-              <button className="w-full flex items-center justify-between px-5 py-4 border-b border-gray-100 active:bg-gray-50">
+              <button
+                type="button"
+                onClick={() => navigate('/account')}
+                className="w-full flex items-center justify-between px-5 py-4 border-b border-gray-100 active:bg-gray-50"
+              >
                 <span className="text-gray-800 text-sm font-medium">joint</span>
                 <div className="flex items-center gap-2">
                   <span className="font-bold text-gray-900 text-base">$664.89</span>
                   <IconChevronRight />
                 </div>
               </button>
-              <button className="w-full flex items-center justify-between px-5 py-4 active:bg-gray-50">
+              <button
+                type="button"
+                onClick={() => navigate('/account')}
+                className="w-full flex items-center justify-between px-5 py-4 active:bg-gray-50"
+              >
                 <span className="text-gray-800 text-sm font-medium text-left leading-snug">
                   Adv SafeBalance<br />Banking - 3580
                 </span>
@@ -246,10 +245,10 @@ function DashboardPage() {
             </div>
           </div>
           <div className="flex divide-x divide-gray-200">
-            <button className="flex-1 py-4 text-[#1a6bbf] font-semibold text-sm tracking-wider active:bg-gray-50">
+            <button type="button" className="flex-1 py-4 text-[#1a6bbf] font-semibold text-sm tracking-wider active:bg-gray-50">
               OFFERS
             </button>
-            <button className="flex-1 py-4 text-[#1a6bbf] font-semibold text-sm tracking-wider active:bg-gray-50">
+            <button type="button" className="flex-1 py-4 text-[#1a6bbf] font-semibold text-sm tracking-wider active:bg-gray-50">
               PRODUCTS
             </button>
           </div>
@@ -263,10 +262,9 @@ function DashboardPage() {
         {/* ── BankAmeriDeals ── */}
         <div className="mx-4 mb-4 bg-white rounded-2xl shadow-sm overflow-hidden">
           <p className="px-5 pt-5 pb-3 text-gray-400 text-[11px] font-semibold tracking-widest uppercase">
-            BankMoltenDeals®
+            BankMoltenDeals&#174;
           </p>
 
-          {/* Horizontally scrollable deal cards */}
           <div
             className="flex gap-3 px-5 pb-4 overflow-x-auto"
             style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
@@ -289,7 +287,6 @@ function DashboardPage() {
             ))}
           </div>
 
-          {/* Pagination dots */}
           <div className="flex justify-center gap-2 pb-3">
             {[0, 1, 2, 3].map((i) => (
               <div
@@ -300,7 +297,7 @@ function DashboardPage() {
           </div>
 
           <div className="border-t border-gray-100">
-            <button className="w-full py-4 text-[#1a6bbf] font-semibold text-sm tracking-wider active:bg-gray-50">
+            <button type="button" className="w-full py-4 text-[#1a6bbf] font-semibold text-sm tracking-wider active:bg-gray-50">
               VIEW ALL DEALS
             </button>
           </div>
@@ -318,13 +315,13 @@ function DashboardPage() {
         <div className="px-4 pb-4">
           <h3 className="font-bold text-xl text-gray-900 mb-3">Legal info and disclosures</h3>
           <p className="text-sm text-gray-700 font-medium mb-2">Investment, insurance and annuity products:</p>
-          <ul className="text-sm text-gray-700 font-medium space-y-1 mb-4">
-            <li>• Are Not FDIC Insured</li>
-            <li>• Are Not Bank Guaranteed</li>
-            <li>• May Lose Value</li>
-            <li>• Are Not Deposits</li>
-            <li>• Are Not Insured by Any Federal Government Agency</li>
-            <li>• Are Not a Condition to Any Banking Service or Activity</li>
+          <ul className="text-sm text-gray-700 space-y-1 mb-4">
+            <li>&#8226; Are Not FDIC Insured</li>
+            <li>&#8226; Are Not Bank Guaranteed</li>
+            <li>&#8226; May Lose Value</li>
+            <li>&#8226; Are Not Deposits</li>
+            <li>&#8226; Are Not Insured by Any Federal Government Agency</li>
+            <li>&#8226; Are Not a Condition to Any Banking Service or Activity</li>
           </ul>
           <div className="border-t border-gray-200 mb-4" />
           <p className="text-sm text-gray-900 font-bold leading-relaxed mb-3">
@@ -389,29 +386,29 @@ function DashboardPage() {
             <button type="button" className="text-[#1a6bbf] text-sm font-semibold">Equal Housing Lender</button>
           </div>
           <p className="text-center text-gray-500 text-xs pt-2">
-            Bank of Molten, N.A. Member FDIC. © 2026 Bank of Molten Corporation.
+            Bank of Molten, N.A. Member FDIC. &#169; 2026 Bank of Molten Corporation.
           </p>
         </div>
       </div>
 
-      {/* ════════════════════════════════
+      {/* ══════════════════════════════════
           FIXED BOTTOM TAB BAR
-      ════════════════════════════════ */}
+      ══════════════════════════════════ */}
       <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200">
         <div className="flex">
-          <button className="flex-1 flex flex-col items-center py-2 gap-0.5">
+          <button type="button" className="flex-1 flex flex-col items-center py-2 gap-0.5">
             <IconDollar active />
             <span className="text-[11px] font-semibold text-[#1a6bbf]">Accounts</span>
           </button>
-          <button className="flex-1 flex flex-col items-center py-2 gap-0.5">
+          <button type="button" className="flex-1 flex flex-col items-center py-2 gap-0.5">
             <IconTransfer />
             <span className="text-[11px] font-medium text-gray-500">Pay &amp; Transfer</span>
           </button>
-          <button className="flex-1 flex flex-col items-center py-2 gap-0.5">
+          <button type="button" className="flex-1 flex flex-col items-center py-2 gap-0.5">
             <IconDeposit />
             <span className="text-[11px] font-medium text-gray-500">Deposit Checks</span>
           </button>
-          <button className="flex-1 flex flex-col items-center py-2 gap-0.5">
+          <button type="button" className="flex-1 flex flex-col items-center py-2 gap-0.5">
             <IconPie />
             <span className="text-[11px] font-medium text-gray-500">Invest</span>
           </button>
