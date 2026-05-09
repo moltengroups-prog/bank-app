@@ -53,6 +53,7 @@ function SignInPage() {
         {/* Touch ID */}
         <div className="flex items-center gap-3 mb-7">
           <button
+            type="button"
             onClick={() => setTouchId(!touchId)}
             className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
               touchId ? 'border-[#1a6bbf] bg-[#1a6bbf]' : 'border-gray-400 bg-white'
@@ -64,25 +65,28 @@ function SignInPage() {
         </div>
 
         {/* Log In Button */}
-        <button className="w-full bg-[#002D72] text-white font-bold text-base tracking-widest py-4 rounded-full mb-5">
+        <button
+          type="button"
+          className="w-full bg-[#002D72] text-white font-bold text-base tracking-widest py-4 rounded-full mb-5"
+        >
           LOG IN
         </button>
 
         {/* Forgot */}
-        <p className="text-center text-[#1a6bbf] font-semibold text-sm">
+        <button type="button" className="w-full text-center text-[#1a6bbf] font-semibold text-sm">
           Forgot user ID/password
-        </p>
+        </button>
       </div>
 
       {/* ── Nav Links ── */}
       <div className="flex items-center justify-center flex-wrap gap-x-3 gap-y-1 px-4 py-5 text-[#1a6bbf] font-medium text-sm">
-        <a href="#">My Balance®</a>
+        <button type="button" className="text-[#1a6bbf] font-medium text-sm">My Balance®</button>
         <span className="text-gray-400">|</span>
-        <a href="#">Enroll</a>
+        <button type="button" className="text-[#1a6bbf] font-medium text-sm">Enroll</button>
         <span className="text-gray-400">|</span>
-        <a href="#">Locations</a>
+        <button type="button" className="text-[#1a6bbf] font-medium text-sm">Locations</button>
         <span className="text-gray-400">|</span>
-        <a href="#">Contact us</a>
+        <button type="button" className="text-[#1a6bbf] font-medium text-sm">Contact us</button>
       </div>
 
       {/* ── FDIC ── */}
@@ -120,7 +124,7 @@ function SignInPage() {
       <div className="px-4 pt-4 pb-2 border-t border-gray-300">
         <p className="text-xs text-gray-500 mb-4">
           Learn more about Merrill's background on{' '}
-          <a href="#" className="text-[#1a6bbf]">FINRA's BrokerCheck</a>.
+          <button type="button" className="text-[#1a6bbf]">FINRA's BrokerCheck</button>.
         </p>
 
         <h2 className="font-bold text-lg text-gray-900 mb-3">
@@ -154,7 +158,7 @@ function SignInPage() {
         <p className="text-sm text-gray-700 mb-3">
           Merrill offers a broad range of brokerage, investment advisory and other
           services. Additional information is available in our{' '}
-          <a href="#" className="text-[#1a6bbf]">Client Relationship Summary.</a>
+          <button type="button" className="text-[#1a6bbf]">Client Relationship Summary.</button>
         </p>
 
         <p className="text-sm text-gray-700 mb-3">
@@ -162,28 +166,28 @@ function SignInPage() {
           banks, Members FDIC and wholly owned subsidiaries of BofM Corp.
         </p>
 
-        <a href="#" className="text-[#1a6bbf] text-sm font-medium leading-snug">
+        <button type="button" className="text-[#1a6bbf] text-sm font-medium leading-snug text-left">
           See additional information about Merrill and Bank of Molten
-        </a>
+        </button>
       </div>
 
       {/* ── Footer ── */}
       <div className="border-t border-gray-300 px-4 pt-6 pb-8 mt-3 space-y-3">
         <div className="flex justify-center gap-8">
-          <a href="#" className="text-[#1a6bbf] text-sm font-medium">Browse with Specialist</a>
-          <a href="#" className="text-[#1a6bbf] text-sm font-medium">Security</a>
+          <button type="button" className="text-[#1a6bbf] text-sm font-medium">Browse with Specialist</button>
+          <button type="button" className="text-[#1a6bbf] text-sm font-medium">Security</button>
         </div>
         <div className="flex justify-center gap-10">
-          <a href="#" className="text-[#1a6bbf] text-sm font-medium">Privacy</a>
-          <a href="#" className="text-[#1a6bbf] text-sm font-medium">Children's Privacy</a>
+          <button type="button" className="text-[#1a6bbf] text-sm font-medium">Privacy</button>
+          <button type="button" className="text-[#1a6bbf] text-sm font-medium">Children's Privacy</button>
         </div>
         <div className="flex justify-center gap-6">
-          <a href="#" className="text-[#1a6bbf] text-sm font-medium">Your Privacy Choices</a>
-          <a href="#" className="text-[#1a6bbf] text-sm font-medium">AdChoices</a>
+          <button type="button" className="text-[#1a6bbf] text-sm font-medium">Your Privacy Choices</button>
+          <button type="button" className="text-[#1a6bbf] text-sm font-medium">AdChoices</button>
         </div>
         <div className="flex justify-center gap-6 flex-wrap">
-          <a href="#" className="text-[#1a6bbf] text-sm font-medium">Legal Info & Disclosures</a>
-          <a href="#" className="text-[#1a6bbf] text-sm font-medium">Equal Housing Lender</a>
+          <button type="button" className="text-[#1a6bbf] text-sm font-medium">Legal Info &amp; Disclosures</button>
+          <button type="button" className="text-[#1a6bbf] text-sm font-medium">Equal Housing Lender</button>
         </div>
         <p className="text-center text-gray-500 text-xs pt-2">
           Bank of Molten, N.A. Member FDIC. © 2026 Bank of Molten Corporation.
