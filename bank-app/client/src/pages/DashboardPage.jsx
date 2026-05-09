@@ -310,7 +310,7 @@ function DashboardPage() {
         <div className="px-4 py-4">
           <p className="text-gray-500 text-base font-normal mb-4">Account information</p>
           <div className="border-t border-gray-300 mb-6" />
-          <a href="#" className="text-[#1a6bbf] font-bold text-base">Account Balance Footnotes</a>
+          <button type="button" className="text-[#1a6bbf] font-bold text-base">Account Balance Footnotes</button>
           <div className="border-t border-gray-300 mt-6" />
         </div>
 
@@ -340,14 +340,14 @@ function DashboardPage() {
           <p className="text-sm text-gray-700 leading-relaxed mb-3">
             Merrill offers a broad range of brokerage, investment advisory and other services.
             Additional information is available in our{' '}
-            <a href="#" className="text-[#1a6bbf]">Client Relationship Summary.</a>
+            <button type="button" className="text-[#1a6bbf]">Client Relationship Summary.</button>
           </p>
           <p className="text-sm text-gray-700 leading-relaxed mb-3">
             Merrill Lynch, Pierce, Fenner &amp; Smith Incorporated (also referred to as "MLPF&amp;S"
             or "Merrill") makes available certain investment products sponsored, managed, distributed
             or provided by companies that are affiliates of Bank of Molten Corporation ("BofM Corp.").
             MLPF&amp;S is a registered broker-dealer, registered investment adviser,{' '}
-            <a href="#" className="text-[#1a6bbf]">Member SIPC</a>{' '}
+            <button type="button" className="text-[#1a6bbf]">Member SIPC</button>{' '}
             and a wholly owned subsidiary of BofM Corp.
           </p>
           <p className="text-sm text-gray-700 leading-relaxed mb-3">
@@ -365,28 +365,28 @@ function DashboardPage() {
             Banking products are provided by Bank of Molten, N.A. ("BANA") and affiliated banks,
             Members FDIC and wholly owned subsidiaries of BofM Corp.
           </p>
-          <a href="#" className="text-[#1a6bbf] text-sm font-medium leading-snug">
+          <button type="button" className="text-[#1a6bbf] text-sm font-medium leading-snug text-left">
             See additional information about Merrill and Bank of Molten
-          </a>
+          </button>
         </div>
 
         {/* ── Footer links ── */}
         <div className="border-t border-gray-300 px-4 pt-6 pb-4 space-y-3">
           <div className="flex justify-center gap-8">
-            <a href="#" className="text-[#1a6bbf] text-sm font-semibold">Browse with Specialist</a>
-            <a href="#" className="text-[#1a6bbf] text-sm font-semibold">Security</a>
+            <button type="button" className="text-[#1a6bbf] text-sm font-semibold">Browse with Specialist</button>
+            <button type="button" className="text-[#1a6bbf] text-sm font-semibold">Security</button>
           </div>
           <div className="flex justify-center gap-10">
-            <a href="#" className="text-[#1a6bbf] text-sm font-semibold">Privacy</a>
-            <a href="#" className="text-[#1a6bbf] text-sm font-semibold">Children's Privacy</a>
+            <button type="button" className="text-[#1a6bbf] text-sm font-semibold">Privacy</button>
+            <button type="button" className="text-[#1a6bbf] text-sm font-semibold">Children's Privacy</button>
           </div>
           <div className="flex justify-center gap-6">
-            <a href="#" className="text-[#1a6bbf] text-sm font-semibold">Your Privacy Choices</a>
-            <a href="#" className="text-[#1a6bbf] text-sm font-semibold">AdChoices</a>
+            <button type="button" className="text-[#1a6bbf] text-sm font-semibold">Your Privacy Choices</button>
+            <button type="button" className="text-[#1a6bbf] text-sm font-semibold">AdChoices</button>
           </div>
           <div className="flex justify-center gap-6 flex-wrap">
-            <a href="#" className="text-[#1a6bbf] text-sm font-semibold">Legal Info &amp; Disclosures</a>
-            <a href="#" className="text-[#1a6bbf] text-sm font-semibold">Equal Housing Lender</a>
+            <button type="button" className="text-[#1a6bbf] text-sm font-semibold">Legal Info &amp; Disclosures</button>
+            <button type="button" className="text-[#1a6bbf] text-sm font-semibold">Equal Housing Lender</button>
           </div>
           <p className="text-center text-gray-500 text-xs pt-2">
             Bank of Molten, N.A. Member FDIC. © 2026 Bank of Molten Corporation.
