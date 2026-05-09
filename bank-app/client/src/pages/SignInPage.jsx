@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import logo from '../assets/logos/logo.png';
 import imgCashback from '../assets/images/box-cashback.jpeg';
 import imgCD from '../assets/images/box-cd.jpeg';
@@ -7,6 +8,7 @@ import imgBonus from '../assets/images/box-bonus.jpeg';
 
 function SignInPage() {
   const [touchId, setTouchId] = useState(false);
+  const navigate = useNavigate();
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col font-sans">
@@ -67,6 +69,7 @@ function SignInPage() {
         {/* Log In Button */}
         <button
           type="button"
+          onClick={() => navigate('/dashboard')}
           className="w-full bg-[#002D72] text-white font-bold text-base tracking-widest py-4 rounded-full mb-5"
         >
           LOG IN
