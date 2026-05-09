@@ -199,7 +199,6 @@ function AccountDetailsPage() {
 
   const [routingOpen,  setRoutingOpen]  = useState(false);
   const [statusOpen,   setStatusOpen]   = useState(false);
-  const [bankingOpen,  setBankingOpen]  = useState(false);
 
   return (
     <div className="flex flex-col h-screen bg-gray-100 font-sans">
