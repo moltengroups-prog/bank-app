@@ -2,24 +2,8 @@ import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import LegalDisclosure from '../components/LegalDisclosure';
 import InsetDivider from '../components/InsetDivider';
-import imgErica from '../assets/images/btn-erica-red.jpeg';
-
-const IconBack = () => (
-  <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-  </svg>
-);
-const IconCart = () => (
-  <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
-      d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-  </svg>
-);
-const IconSearch = () => (
-  <svg className="w-4 h-4 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-  </svg>
-);
+import AppHeader from '../components/AppHeader';
+import EricaSearchBar from '../components/EricaSearchBar';
 const IconInfo = () => (
   <svg className="w-4 h-4 text-[#1a6bbf]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <circle cx="12" cy="12" r="10" strokeWidth={1.5} />
@@ -57,39 +41,12 @@ function TransactionDetailsPage() {
   return (
     <div className="flex flex-col min-h-screen bg-gray-100 font-sans">
 
-      {/* Fixed Header */}
-      <div className="fixed top-0 left-0 right-0 z-50 bg-white shadow-sm">
-        <div className="flex items-center justify-between px-4 py-3">
-          <button
-            type="button"
-            onClick={() => navigate(-1)}
-            className="flex items-center justify-center w-8 h-8 flex-shrink-0"
-          >
-            <IconBack />
-          </button>
-          <span className="text-base font-normal text-gray-500 tracking-wide">Details</span>
-          <button type="button" className="flex items-center justify-center w-8 h-8 flex-shrink-0">
-            <IconCart />
-          </button>
-        </div>
-      </div>
+      <AppHeader showBackButton title="Details" showCartRight />
 
       {/* Scrollable body */}
       <div className="flex-1 overflow-y-auto pt-[64px] pb-8">
 
-        {/* Erica search bar */}
-        <div className="bg-white px-4 py-3">
-          <div className="flex items-center gap-3">
-            <div className="flex-1 flex items-center gap-2 bg-gray-200 rounded-full px-4 py-2.5">
-              <IconSearch />
-              <span className="text-gray-400 text-sm font-normal">Hi, I&#39;m Erica. How can I help?</span>
-            </div>
-            <div className="relative flex-shrink-0">
-              <img src={imgErica} alt="Erica" className="w-10 h-10 rounded-full object-cover" />
-              <span className="absolute -top-1 -right-1 bg-[#002D72] text-white text-[8px] font-bold rounded-full w-4 h-4 flex items-center justify-center">3</span>
-            </div>
-          </div>
-        </div>
+        <EricaSearchBar ericaCount={3} />
 
         {/* Transaction description + Edit Description + View more */}
         <div className="bg-white mt-3">

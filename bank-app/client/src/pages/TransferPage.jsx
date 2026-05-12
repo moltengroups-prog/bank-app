@@ -2,18 +2,12 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import LegalDisclosure from '../components/LegalDisclosure';
 import InsetDivider from '../components/InsetDivider';
+import AppHeader from '../components/AppHeader';
 import AccountPickerModal from '../components/AccountPickerModal';
 import AmountInputModal from '../components/AmountInputModal';
 import DatePickerModal from '../components/DatePickerModal';
-import imgErica from '../assets/images/btn-erica-red.jpeg';
 
 const SHORT_MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-
-const IconBack = () => (
-  <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-  </svg>
-);
 
 const IconLightbulb = () => (
   <svg className="w-10 h-10 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -41,29 +35,7 @@ function TransferPage() {
   return (
     <div className="flex flex-col h-screen bg-gray-100 font-sans">
 
-      {/* ══════════════════════════════════
-          FIXED HEADER
-      ══════════════════════════════════ */}
-      <div className="fixed top-0 left-0 right-0 z-50 bg-white shadow-sm">
-        <div className="flex items-center justify-between px-4 py-3">
-          <button
-            type="button"
-            onClick={() => navigate(-1)}
-            className="flex items-center justify-center w-8 h-8 flex-shrink-0"
-          >
-            <IconBack />
-          </button>
-
-          <span className="text-base font-normal text-gray-500 tracking-wide">Transfer</span>
-
-          <div className="relative flex-shrink-0">
-            <img src={imgErica} alt="Erica assistant" className="w-10 h-10 rounded-full object-cover" />
-            <span className="absolute -top-1 -right-1 bg-[#002D72] text-white text-[8px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
-              3
-            </span>
-          </div>
-        </div>
-      </div>
+      <AppHeader showBackButton title="Transfer" showEricaRight ericaRightCount={3} />
 
       {/* ══════════════════════════════════
           SCROLLABLE BODY

@@ -2,16 +2,9 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import LegalDisclosure from '../components/LegalDisclosure';
 import InsetDivider from '../components/InsetDivider';
+import AppHeader from '../components/AppHeader';
 import ActivityDetailsPage from './ActivityDetailsPage';
-import imgErica   from '../assets/images/btn-erica-red.jpeg';
 import imgBoaMini from '../assets/images/boa-mini-logo.png';
-
-/* ── SVG Icons ── */
-const IconBack = () => (
-  <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-  </svg>
-);
 const IconLightbulb = () => (
   <svg className="w-6 h-6 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
@@ -66,29 +59,7 @@ function ActivityPage() {
   return (
     <div className="flex flex-col h-screen bg-gray-100 font-sans">
 
-      {/* ══════════════════════════════════
-          FIXED HEADER
-      ══════════════════════════════════ */}
-      <div className="fixed top-0 left-0 right-0 z-50 bg-white shadow-sm">
-        <div className="flex items-center justify-between px-4 py-3">
-
-          {/* Left — back arrow */}
-          <button type="button" onClick={() => navigate(-1)} className="flex items-center justify-center w-8 h-8 flex-shrink-0">
-            <IconBack />
-          </button>
-
-          {/* Center — page title */}
-          <span className="text-base font-normal text-gray-500 tracking-wide">Activity</span>
-
-          {/* Right — Erica avatar */}
-          <div className="relative flex-shrink-0">
-            <img src={imgErica} alt="Erica assistant" className="w-10 h-10 rounded-full object-cover" />
-            <span className="absolute -top-1 -right-1 bg-[#002D72] text-white text-[8px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
-              3
-            </span>
-          </div>
-        </div>
-      </div>
+      <AppHeader showBackButton title="Activity" showEricaRight ericaRightCount={3} />
 
       {/* ══════════════════════════════════
           SCROLLABLE BODY
