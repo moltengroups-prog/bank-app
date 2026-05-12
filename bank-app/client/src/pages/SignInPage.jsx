@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import InsetDivider from '../components/InsetDivider';
 import logo from '../assets/logos/logo.png';
 import imgCashback from '../assets/images/box-cashback.jpeg';
 import imgCD from '../assets/images/box-cd.jpeg';
@@ -124,7 +125,8 @@ function SignInPage() {
       </div>
 
       {/* ── Legal ── */}
-      <div className="px-4 pt-4 pb-2 border-t border-gray-300">
+      <InsetDivider />
+      <div className="px-4 pt-4 pb-2">
         <p className="text-xs text-gray-500 mb-4">
           Learn more about Merrill's background on{' '}
           <button type="button" className="text-[#1a6bbf]">FINRA's BrokerCheck</button>.
@@ -175,7 +177,8 @@ function SignInPage() {
       </div>
 
       {/* ── Footer ── */}
-      <div className="border-t border-gray-300 px-4 pt-6 pb-8 mt-3 space-y-3">
+      <InsetDivider className="mt-3" />
+      <div className="px-4 pt-6 pb-8 space-y-3">
         <div className="flex justify-center gap-8">
           <button type="button" className="text-[#1a6bbf] text-sm font-medium">Browse with Specialist</button>
           <button type="button" className="text-[#1a6bbf] text-sm font-medium">Security</button>

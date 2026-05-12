@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import InsetDivider from './InsetDivider';
 import imgBoaMini from '../assets/images/boa-mini-logo.png';
 
 const ACCOUNTS = [
@@ -61,29 +62,29 @@ function AccountPickerModal({ open, onClose, title, selected, onSelect }) {
 
         {/* Account rows */}
         {ACCOUNTS.map((acc, i) => (
-          <button
-            type="button"
-            key={acc.id}
-            onClick={() => handleSelect(acc)}
-            className={`w-full flex items-center gap-4 px-5 py-5 active:bg-gray-50 text-left ${
-              i < ACCOUNTS.length - 1 ? 'border-b border-gray-200' : ''
-            }`}
-          >
-            {/* Radio */}
-            <div
-              className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
-                selected?.id === acc.id ? 'border-[#1a6bbf]' : 'border-gray-400'
-              }`}
+          <React.Fragment key={acc.id}>
+            <button
+              type="button"
+              onClick={() => handleSelect(acc)}
+              className="w-full flex items-center gap-4 px-5 py-5 active:bg-gray-50 text-left"
             >
-              {selected?.id === acc.id && (
-                <div className="w-3 h-3 rounded-full bg-[#1a6bbf]" />
-              )}
-            </div>
-            <div>
-              <p className="text-gray-900 font-medium text-base leading-snug">{acc.name}</p>
-              <p className="text-gray-500 text-sm mt-0.5">Available balance {acc.balance}</p>
-            </div>
-          </button>
+              {/* Radio */}
+              <div
+                className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                  selected?.id === acc.id ? 'border-[#1a6bbf]' : 'border-gray-400'
+                }`}
+              >
+                {selected?.id === acc.id && (
+                  <div className="w-3 h-3 rounded-full bg-[#1a6bbf]" />
+                )}
+              </div>
+              <div>
+                <p className="text-gray-900 font-medium text-base leading-snug">{acc.name}</p>
+                <p className="text-gray-500 text-sm mt-0.5">Available balance {acc.balance}</p>
+              </div>
+            </button>
+            {i < ACCOUNTS.length - 1 && <InsetDivider color={200} />}
+          </React.Fragment>
         ))}
 
         <div className="h-10" />

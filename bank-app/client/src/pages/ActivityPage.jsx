@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import LegalDisclosure from '../components/LegalDisclosure';
+import InsetDivider from '../components/InsetDivider';
 import ActivityDetailsPage from './ActivityDetailsPage';
 import imgErica   from '../assets/images/btn-erica-red.jpeg';
 import imgBoaMini from '../assets/images/boa-mini-logo.png';
@@ -113,7 +114,7 @@ function ActivityPage() {
           <p className="text-gray-700 text-base mb-4">There&#39;s nothing scheduled right now.</p>
         </div>
 
-        <div className="border-t border-gray-300 mx-0 mb-4" />
+        <InsetDivider className="mb-4" />
 
         {/* ── History section ── */}
         <div className="px-4 mb-3">
@@ -133,29 +134,32 @@ function ActivityPage() {
         {/* ── Transaction rows ── */}
         <div className="bg-white mx-0">
           {transactions.map((tx, i) => (
-            <button
-              type="button"
-              key={i}
-              onClick={() => setSelectedTx(tx)}
-              className={`w-full flex items-center justify-between px-4 py-4 text-left active:bg-gray-50 ${i < transactions.length - 1 ? 'border-b border-gray-200' : ''}`}
-            >
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 overflow-hidden border border-gray-200">
-                  <img src={imgBoaMini} alt="Bank of Molten" className="w-8 h-8 object-contain" />
+            <React.Fragment key={i}>
+              <button
+                type="button"
+                onClick={() => setSelectedTx(tx)}
+                className="w-full flex items-center justify-between px-4 py-4 text-left active:bg-gray-50"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 overflow-hidden border border-gray-200">
+                    <img src={imgBoaMini} alt="Bank of Molten" className="w-8 h-8 object-contain" />
+                  </div>
+                  <p className="text-gray-900 font-medium text-sm leading-snug">{tx.name}</p>
                 </div>
-                <p className="text-gray-900 font-medium text-sm leading-snug">{tx.name}</p>
-              </div>
-              <div className="text-right flex-shrink-0 ml-4">
-                <p className="text-gray-500 text-xs mb-0.5">{tx.date}</p>
-                <p className="text-[#1a6bbf] font-bold text-base">{tx.amount}</p>
-                <p className="text-gray-400 text-xs">Completed</p>
-              </div>
-            </button>
+                <div className="text-right flex-shrink-0 ml-4">
+                  <p className="text-gray-500 text-xs mb-0.5">{tx.date}</p>
+                  <p className="text-[#1a6bbf] font-bold text-base">{tx.amount}</p>
+                  <p className="text-gray-400 text-xs">Completed</p>
+                </div>
+              </button>
+              {i < transactions.length - 1 && <InsetDivider color={200} />}
+            </React.Fragment>
           ))}
         </div>
 
         {/* ── Footer note ── */}
-        <div className="px-4 py-4 border-t border-gray-200">
+        <InsetDivider color={200} />
+        <div className="px-4 py-4">
           <p className="text-gray-500 text-sm text-center">
             You&#39;re viewing all available results.{' '}
             <button type="button" className="text-[#1a6bbf] font-medium">

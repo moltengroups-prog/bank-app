@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import InsetDivider from './InsetDivider';
 import imgErica from '../assets/images/btn-erica-red.jpeg';
 
 const MONTH_NAMES = [
@@ -108,10 +109,11 @@ function DatePickerModal({ open, onClose, selectedDate, onDone }) {
         </div>
 
         {/* Date heading + Transfer On */}
-        <div className="flex-shrink-0 flex items-center justify-between px-4 py-4 bg-white border-b border-gray-100">
+        <div className="flex-shrink-0 flex items-center justify-between px-4 py-4 bg-white">
           <h2 className="text-3xl font-extrabold text-gray-900">Date</h2>
           <span className="text-sm text-gray-500">Transfer On: {formatDate(pickedDate)}</span>
         </div>
+        <InsetDivider color={100} />
 
         {/* Calendar */}
         <div className="flex-1 overflow-y-auto bg-white px-4 pb-28">
@@ -197,21 +199,24 @@ function DatePickerModal({ open, onClose, selectedDate, onDone }) {
         </div>
 
         {/* Bottom buttons */}
-        <div className="flex-shrink-0 bg-white border-t border-gray-200 px-4 py-3 flex gap-3">
-          <button
-            type="button"
-            onClick={handleClose}
-            className="flex-1 py-4 border-2 border-[#1a6bbf] text-[#1a6bbf] font-bold text-sm tracking-widest rounded-full bg-white active:bg-gray-50"
-          >
-            CANCEL
-          </button>
-          <button
-            type="button"
-            onClick={handleDone}
-            className="flex-1 py-4 bg-[#002D72] text-white font-bold text-sm tracking-widest rounded-full active:bg-[#001d4a]"
-          >
-            DONE
-          </button>
+        <div className="flex-shrink-0 bg-white">
+          <InsetDivider color={200} />
+          <div className="px-4 py-3 flex gap-3">
+            <button
+              type="button"
+              onClick={handleClose}
+              className="flex-1 py-4 border-2 border-[#1a6bbf] text-[#1a6bbf] font-bold text-sm tracking-widest rounded-full bg-white active:bg-gray-50"
+            >
+              CANCEL
+            </button>
+            <button
+              type="button"
+              onClick={handleDone}
+              className="flex-1 py-4 bg-[#002D72] text-white font-bold text-sm tracking-widest rounded-full active:bg-[#001d4a]"
+            >
+              DONE
+            </button>
+          </div>
         </div>
       </div>
 

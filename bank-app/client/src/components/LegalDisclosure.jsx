@@ -1,10 +1,12 @@
 import React from 'react';
+import InsetDivider from './InsetDivider';
 
 function LegalDisclosure() {
   return (
     <>
       {/* Legal info and disclosures */}
-      <div className="border-t border-gray-300 px-4 pt-4 pb-4">
+      <InsetDivider />
+      <div className="px-4 pt-4 pb-4">
         <h3 className="font-bold text-xl text-gray-900 mb-4">Legal info and disclosures</h3>
         <p className="text-sm text-gray-700 mb-3">
           Investment, insurance and annuity products:
@@ -17,7 +19,7 @@ function LegalDisclosure() {
           <li>&#8226; <strong>Are Not Insured by Any Federal Government Agency</strong></li>
           <li>&#8226; <strong>Are Not a Condition to Any Banking Service or Activity</strong></li>
         </ul>
-        <div className="border-t border-gray-200 mb-4" />
+        <InsetDivider color={200} inset={false} className="mb-4" />
         <p className="text-sm text-gray-900 font-bold leading-relaxed mb-4">
           Investing involves risk. There is always the potential of losing money when you
           invest in securities. Asset allocation, diversification, and rebalancing do not
@@ -66,7 +68,8 @@ function LegalDisclosure() {
       </div>
 
       {/* Footer links */}
-      <div className="border-t border-gray-300 px-4 pt-6 pb-8 space-y-3">
+      <InsetDivider />
+      <div className="px-4 pt-6 pb-8 space-y-3">
         <div className="flex justify-center gap-8">
           <button type="button" className="text-[#1a6bbf] text-sm font-semibold">Browse with Specialist</button>
           <button type="button" className="text-[#1a6bbf] text-sm font-semibold">Security</button>
@@ -86,7 +89,7 @@ function LegalDisclosure() {
           <button type="button" className="text-[#1a6bbf] text-sm font-semibold">Equal Housing Lender &#127968;</button>
         </div>
         <p className="text-center text-gray-500 text-xs pt-2">
-          Bank of Molten, N.A. Member FDIC. &#169; 2026 Bank of Molten Corporation.
+          Bank of Molten, N.A. Member FDIC. &#169; 2026 Bank of America Corporation.
         </p>
       </div>
     </>

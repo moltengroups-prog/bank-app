@@ -1,13 +1,14 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import LegalDisclosure from '../components/LegalDisclosure';
+import InsetDivider from '../components/InsetDivider';
 
 import imgErica       from '../assets/images/btn-erica-red.jpeg';
-import imgAvailBal    from '../assets/images/available-balance.jpeg';
+import imgAvailBal    from '../assets/images/available-balance.png';
 import imgAvgSpend    from '../assets/images/spending-chart.jpeg';
 import imgAdidas      from '../assets/images/logo-adidas.png';
 import imgAlerts      from '../assets/images/alerts.jpeg';
-import imgBetterMoney from '../assets/images/better-money-habits.jpeg';
+import imgBetterMoney from '../assets/images/better-money-habits.png';
 
 /* ── SVG Icons ── */
 const IconHamburger = () => (
@@ -85,26 +86,24 @@ function MainDashboardPage() {
         <div className="flex items-center justify-between px-4 py-3">
 
           {/* Left — hamburger */}
-          <button type="button" className="flex flex-col items-center gap-1 flex-shrink-0">
+          <button type="button" onClick={() => navigate('/menu')} className="flex flex-col items-center gap-1 flex-shrink-0">
             <IconHamburger />
             <span className="text-[10px] font-medium text-gray-600">Menu</span>
           </button>
 
-          {/* Centre — Erica */}
-          <div className="relative flex-shrink-0">
-            <img
-              src={imgErica}
-              alt="Erica assistant"
-              className="w-12 h-12 rounded-full object-cover"
-            />
-            <span className="absolute -top-1 -right-1 bg-[#002D72] text-white text-[8px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
-              2
-            </span>
-          </div>
-
-          {/* Right — Inbox / Products / Log Out */}
-          <div className="flex items-end gap-4 flex-shrink-0">
-            <button type="button" className="flex flex-col items-center gap-0.5">
+          {/* Right — Erica / Inbox / Products / Log Out */}
+          <div className="flex items-end gap-3 flex-shrink-0">
+            <div className="relative flex-shrink-0 mb-3 -translate-x-1">
+              <img
+                src={imgErica}
+                alt="Erica assistant"
+                className="w-8 h-8 rounded-full object-cover"
+              />
+              <span className="absolute -top-1 -right-1 bg-[#002D72] text-white text-[8px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                2
+              </span>
+            </div>
+            <button type="button" onClick={() => navigate('/communications')} className="flex flex-col items-center gap-0.5">
               <div className="relative">
                 <IconEnvelope />
                 <span className="absolute -top-1.5 -right-1.5 bg-[#002D72] text-white text-[8px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
@@ -125,7 +124,7 @@ function MainDashboardPage() {
         </div>
 
         {/* Sub-nav — Accounts | Dashboard */}
-        <div className="flex border-b border-gray-200">
+        <div className="flex">
           <button
             type="button"
             onClick={() => navigate('/dashboard')}
@@ -140,6 +139,7 @@ function MainDashboardPage() {
             Dashboard
           </button>
         </div>
+        <InsetDivider color={200} />
       </div>
 
       {/* ══════════════════════════════════
@@ -155,7 +155,7 @@ function MainDashboardPage() {
             <img
               src={imgAvailBal}
               alt="Available balance"
-              className="w-16 h-14 object-contain mb-3"
+              className="w-24 h-20 object-contain mb-1"
             />
             <p className="text-gray-500 text-sm font-normal mb-1">joint</p>
             <p className="text-gray-900 text-2xl font-bold leading-tight">$664.89</p>
@@ -198,7 +198,7 @@ function MainDashboardPage() {
               <img
                 src={imgAlerts}
                 alt="Alerts"
-                className="w-16 h-16 object-contain"
+                className="w-14 h-14 object-contain"
               />
             </div>
             <p className="text-gray-900 text-sm font-semibold mb-1">Alerts</p>
@@ -271,7 +271,8 @@ function MainDashboardPage() {
       {/* ══════════════════════════════════
           FIXED BOTTOM TAB BAR
       ══════════════════════════════════ */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200">
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white">
+        <InsetDivider color={200} />
         <div className="flex">
           <button type="button" className="flex-1 flex flex-col items-center py-2 gap-0.5">
             <IconDollar active />
@@ -281,11 +282,11 @@ function MainDashboardPage() {
             <IconTransfer />
             <span className="text-[11px] font-medium text-gray-500">Pay &amp; Transfer</span>
           </button>
-          <button type="button" className="flex-1 flex flex-col items-center py-2 gap-0.5">
+          <button type="button" onClick={() => navigate('/deposit-checks')} className="flex-1 flex flex-col items-center py-2 gap-0.5">
             <IconDeposit />
             <span className="text-[11px] font-medium text-gray-500">Deposit Checks</span>
           </button>
-          <button type="button" className="flex-1 flex flex-col items-center py-2 gap-0.5">
+          <button type="button" onClick={() => navigate('/invest')} className="flex-1 flex flex-col items-center py-2 gap-0.5">
             <IconPie />
             <span className="text-[11px] font-medium text-gray-500">Invest</span>
           </button>

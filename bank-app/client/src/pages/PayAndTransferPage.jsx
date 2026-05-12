@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import LegalDisclosure from '../components/LegalDisclosure';
+import InsetDivider from '../components/InsetDivider';
 import ActivityDetailsPage from './ActivityDetailsPage';
 
 import imgErica    from '../assets/images/btn-erica-red.jpeg';
@@ -100,14 +101,14 @@ function PayAndTransferPage() {
         <div className="flex items-center justify-between px-4 py-3">
 
           {/* Left — hamburger + Menu */}
-          <button type="button" className="flex flex-col items-center gap-1 flex-shrink-0">
+          <button type="button" onClick={() => navigate('/menu')} className="flex flex-col items-center gap-1 flex-shrink-0">
             <IconHamburger />
             <span className="text-[10px] font-medium text-gray-600">Menu</span>
           </button>
 
           {/* Right — Inbox / Products / Log Out */}
           <div className="flex items-end gap-4 flex-shrink-0">
-            <button type="button" className="flex flex-col items-center gap-0.5">
+            <button type="button" onClick={() => navigate('/communications')} className="flex flex-col items-center gap-0.5">
               <div className="relative">
                 <IconEnvelope />
                 <span className="absolute -top-1.5 -right-1.5 bg-[#002D72] text-white text-[8px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
@@ -209,24 +210,26 @@ function PayAndTransferPage() {
           </div>
 
           {transactions.map((tx, i) => (
-            <button
-              type="button"
-              key={i}
-              onClick={() => setSelectedTx(tx)}
-              className="w-full flex items-center justify-between px-5 py-4 border-b border-gray-100 text-left active:bg-gray-50"
-            >
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 overflow-hidden border border-gray-200">
-                  <img src={imgBoaMini} alt="Bank of Molten" className="w-8 h-8 object-contain" />
+            <React.Fragment key={i}>
+              <button
+                type="button"
+                onClick={() => setSelectedTx(tx)}
+                className="w-full flex items-center justify-between px-5 py-4 text-left active:bg-gray-50"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 overflow-hidden border border-gray-200">
+                    <img src={imgBoaMini} alt="Bank of Molten" className="w-8 h-8 object-contain" />
+                  </div>
+                  <p className="text-gray-900 font-medium text-sm leading-snug">{tx.name}</p>
                 </div>
-                <p className="text-gray-900 font-medium text-sm leading-snug">{tx.name}</p>
-              </div>
-              <div className="text-right flex-shrink-0 ml-4">
-                <p className="text-gray-500 text-xs mb-0.5">{tx.date}</p>
-                <p className="text-[#1a6bbf] font-bold text-base">{tx.amount}</p>
-                <p className="text-gray-400 text-xs">Completed</p>
-              </div>
-            </button>
+                <div className="text-right flex-shrink-0 ml-4">
+                  <p className="text-gray-500 text-xs mb-0.5">{tx.date}</p>
+                  <p className="text-[#1a6bbf] font-bold text-base">{tx.amount}</p>
+                  <p className="text-gray-400 text-xs">Completed</p>
+                </div>
+              </button>
+              <InsetDivider color={100} />
+            </React.Fragment>
           ))}
 
           {/* More Activity */}
@@ -243,7 +246,8 @@ function PayAndTransferPage() {
       {/* ══════════════════════════════════
           FIXED BOTTOM TAB BAR
       ══════════════════════════════════ */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200">
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white">
+        <InsetDivider color={200} />
         <div className="flex">
           <button
             type="button"
@@ -257,11 +261,11 @@ function PayAndTransferPage() {
             <IconTransferTab />
             <span className="text-[11px] font-semibold text-[#1a6bbf]">Pay &amp; Transfer</span>
           </button>
-          <button type="button" className="flex-1 flex flex-col items-center py-2 gap-0.5">
+          <button type="button" onClick={() => navigate('/deposit-checks')} className="flex-1 flex flex-col items-center py-2 gap-0.5">
             <IconDeposit />
             <span className="text-[11px] font-medium text-gray-500">Deposit Checks</span>
           </button>
-          <button type="button" className="flex-1 flex flex-col items-center py-2 gap-0.5">
+          <button type="button" onClick={() => navigate('/invest')} className="flex-1 flex flex-col items-center py-2 gap-0.5">
             <IconPie />
             <span className="text-[11px] font-medium text-gray-500">Invest</span>
           </button>

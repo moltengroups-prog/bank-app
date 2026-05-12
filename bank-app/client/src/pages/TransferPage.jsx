@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import LegalDisclosure from '../components/LegalDisclosure';
+import InsetDivider from '../components/InsetDivider';
 import AccountPickerModal from '../components/AccountPickerModal';
 import AmountInputModal from '../components/AmountInputModal';
 import DatePickerModal from '../components/DatePickerModal';
@@ -32,7 +33,7 @@ function TransferPage() {
   const [fromAccount, setFromAccount] = useState(null);
   const [toAccount, setToAccount]     = useState(null);
   const [amount, setAmount]           = useState('');
-  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState(null);
 
   const formatDate = (date) =>
     `${SHORT_MONTHS[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
@@ -83,20 +84,21 @@ function TransferPage() {
           <p className="text-sm font-bold text-gray-900">Investment products are not FDIC-Insured.</p>
         </div>
 
-        <div className="border-t border-gray-300" />
+        <InsetDivider />
 
         {/* ── From / To ── */}
         <div className="bg-white">
           <button
             type="button"
             onClick={() => setFromModal(true)}
-            className="w-full flex items-center justify-between px-4 py-5 border-b border-gray-200 active:bg-gray-50"
+            className="w-full flex items-center justify-between px-4 py-5 active:bg-gray-50"
           >
             <span className="text-base text-gray-900">From</span>
             <span className={`text-base ${fromAccount ? 'text-gray-900' : 'text-[#1a6bbf]'}`}>
               {fromAccount ? fromAccount.name : 'Choose account'}
             </span>
           </button>
+          <InsetDivider color={200} />
           <button
             type="button"
             onClick={() => setToModal(true)}
@@ -116,20 +118,23 @@ function TransferPage() {
           <button
             type="button"
             onClick={() => setAmountModal(true)}
-            className="w-full flex items-center justify-between px-4 py-5 border-b border-gray-200 active:bg-gray-50"
+            className="w-full flex items-center justify-between px-4 py-5 active:bg-gray-50"
           >
             <span className="text-base text-gray-900">Amount</span>
             <span className={`text-base ${amount ? 'text-gray-900' : 'text-[#1a6bbf]'}`}>
               {amount ? `$${amount}` : 'Enter amount'}
             </span>
           </button>
+          <InsetDivider color={200} />
           <button
             type="button"
             onClick={() => setDateModal(true)}
             className="w-full flex items-center justify-between px-4 py-5 active:bg-gray-50"
           >
             <span className="text-base text-gray-900">Date</span>
-            <span className="text-base text-gray-900">{formatDate(selectedDate)}</span>
+            <span className={`text-base ${selectedDate ? 'text-gray-900' : 'text-[#1a6bbf]'}`}>
+              {selectedDate ? formatDate(selectedDate) : 'Enter date'}
+            </span>
           </button>
         </div>
 
@@ -153,20 +158,23 @@ function TransferPage() {
       {/* ══════════════════════════════════
           FIXED BOTTOM BUTTONS
       ══════════════════════════════════ */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 px-4 py-3 flex gap-3">
-        <button
-          type="button"
-          onClick={() => navigate(-1)}
-          className="flex-1 py-4 border-2 border-[#1a6bbf] text-[#1a6bbf] font-bold text-sm tracking-widest rounded-full bg-white active:bg-gray-50"
-        >
-          CANCEL
-        </button>
-        <button
-          type="button"
-          className="flex-1 py-4 bg-slate-500 text-white font-bold text-sm tracking-widest rounded-full active:bg-slate-600"
-        >
-          NEXT
-        </button>
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white">
+        <InsetDivider color={200} />
+        <div className="px-4 py-3 flex gap-3">
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="flex-1 py-4 border-2 border-[#1a6bbf] text-[#1a6bbf] font-bold text-sm tracking-widest rounded-full bg-white active:bg-gray-50"
+          >
+            CANCEL
+          </button>
+          <button
+            type="button"
+            className="flex-1 py-4 bg-slate-500 text-white font-bold text-sm tracking-widest rounded-full active:bg-slate-600"
+          >
+            NEXT
+          </button>
+        </div>
       </div>
 
       {/* ── Modals ── */}
@@ -193,7 +201,7 @@ function TransferPage() {
       <DatePickerModal
         open={dateModal}
         onClose={() => setDateModal(false)}
-        selectedDate={selectedDate}
+        selectedDate={selectedDate || new Date()}
         onDone={(date) => setSelectedDate(date)}
       />
 

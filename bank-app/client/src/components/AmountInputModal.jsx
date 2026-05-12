@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import imgErica from '../assets/images/btn-erica-red.jpeg';
 import LegalDisclosure from './LegalDisclosure';
+import InsetDivider from './InsetDivider';
 
 function AmountInputModal({ open, onClose, value, onDone }) {
   const [animated, setAnimated] = useState(false);
@@ -89,21 +90,24 @@ function AmountInputModal({ open, onClose, value, onDone }) {
         </div>
 
         {/* Bottom buttons */}
-        <div className="flex-shrink-0 bg-white border-t border-gray-200 px-4 py-3 flex gap-3">
-          <button
-            type="button"
-            onClick={handleClose}
-            className="flex-1 py-4 border-2 border-[#1a6bbf] text-[#1a6bbf] font-bold text-sm tracking-widest rounded-full bg-white active:bg-gray-50"
-          >
-            CANCEL
-          </button>
-          <button
-            type="button"
-            onClick={handleDone}
-            className="flex-1 py-4 bg-[#002D72] text-white font-bold text-sm tracking-widest rounded-full active:bg-[#001d4a]"
-          >
-            DONE
-          </button>
+        <div className="flex-shrink-0 bg-white">
+          <InsetDivider color={200} />
+          <div className="px-4 py-3 flex gap-3">
+            <button
+              type="button"
+              onClick={handleClose}
+              className="flex-1 py-4 border-2 border-[#1a6bbf] text-[#1a6bbf] font-bold text-sm tracking-widest rounded-full bg-white active:bg-gray-50"
+            >
+              CANCEL
+            </button>
+            <button
+              type="button"
+              onClick={handleDone}
+              className="flex-1 py-4 bg-[#002D72] text-white font-bold text-sm tracking-widest rounded-full active:bg-[#001d4a]"
+            >
+              DONE
+            </button>
+          </div>
         </div>
       </div>
 
