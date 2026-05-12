@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import LegalDisclosure from '../components/LegalDisclosure';
+import InsetDivider from '../components/InsetDivider';
 import imgErica    from '../assets/images/btn-erica-red.jpeg';
 import imgPiggyBank from '../assets/images/piggybank.jpeg';
 import imgApplePay from '../assets/images/applepay-log.png';
@@ -20,6 +21,11 @@ const transactions = [
     amount: '-$100.00',
     balance: '$664.89',
     debit: true,
+    transactionDate: '05/03/2026',
+    type: 'Debit Card',
+    onlinePurchase: 'Y',
+    merchant: 'SQUARE CASH',
+    category: 'Cash, Checks & Misc:Other Expenses',
   },
   {
     status: 'Processing',
@@ -27,6 +33,11 @@ const transactions = [
     amount: '-$120.47',
     balance: '$764.89',
     debit: true,
+    transactionDate: '05/02/2026',
+    type: 'Debit Card',
+    onlinePurchase: 'N',
+    merchant: 'WALMART SUPERCENTER',
+    category: 'Groceries & Supermarkets',
   },
   {
     status: 'Processing',
@@ -34,6 +45,11 @@ const transactions = [
     amount: '-$17.22',
     balance: '$885.36',
     debit: true,
+    transactionDate: '05/02/2026',
+    type: 'Debit Card',
+    onlinePurchase: 'N',
+    merchant: 'FOOD DEPOT',
+    category: 'Groceries & Supermarkets',
   },
   {
     status: 'May 1, 2026',
@@ -41,6 +57,11 @@ const transactions = [
     amount: '-$200.00',
     balance: '$1,357.90',
     debit: true,
+    transactionDate: '05/01/2026',
+    type: 'ACH',
+    onlinePurchase: 'N',
+    merchant: 'BANK OF MOLTEN',
+    category: 'Transfers',
   },
   {
     status: 'May 1, 2026',
@@ -48,6 +69,11 @@ const transactions = [
     amount: '$1,139.15',
     balance: '$1,557.90',
     debit: false,
+    transactionDate: '05/01/2026',
+    type: 'ACH',
+    onlinePurchase: 'N',
+    merchant: 'AT&T SERVICES',
+    category: 'Income',
   },
   {
     status: 'Apr 29, 2026',
@@ -55,6 +81,11 @@ const transactions = [
     amount: '-$50.00',
     balance: '$418.75',
     debit: true,
+    transactionDate: '04/28/2026',
+    type: 'Debit Card',
+    onlinePurchase: 'Y',
+    merchant: 'SQUARE CASH',
+    category: 'Cash, Checks & Misc:Other Expenses',
   },
 ];
 
@@ -216,7 +247,7 @@ function AccountDetailsPage() {
 
           {/* Right actions */}
           <div className="flex items-end gap-5">
-            <button type="button" className="flex flex-col items-center gap-0.5">
+            <button type="button" onClick={() => navigate('/communications')} className="flex flex-col items-center gap-0.5">
               <div className="relative">
                 <IconEnvelope />
                 <span className="absolute -top-1.5 -right-1.5 bg-[#002D72] text-white text-[8px] font-bold rounded-full w-4 h-4 flex items-center justify-center">1</span>
@@ -281,18 +312,21 @@ function AccountDetailsPage() {
             <ChevronDown />
           </button>
           {routingOpen && (
-            <div className="px-5 pb-4 border-t border-gray-100">
-              <div className="pt-4 space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-500">Account number</span>
-                  <span className="text-sm font-medium text-gray-900">••••••7890</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-500">Routing number</span>
-                  <span className="text-sm font-medium text-gray-900">026009593</span>
+            <>
+              <InsetDivider color={100} />
+              <div className="px-5 pb-4">
+                <div className="pt-4 space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-500">Account number</span>
+                    <span className="text-sm font-medium text-gray-900">••••••7890</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-500">Routing number</span>
+                    <span className="text-sm font-medium text-gray-900">026009593</span>
+                  </div>
                 </div>
               </div>
-            </div>
+            </>
           )}
         </div>
 
@@ -322,7 +356,11 @@ function AccountDetailsPage() {
             <div className="space-y-0">
               {transactions.map((tx, i) => (
                 <div key={i}>
-                  <div className="flex items-start justify-between py-3">
+                  <button
+                    type="button"
+                    onClick={() => navigate('/transaction-details', { state: { transaction: tx } })}
+                    className="w-full flex items-start justify-between py-3 text-left active:bg-gray-50"
+                  >
                     <div className="flex-1 pr-4">
                       <p className="text-gray-500 text-xs font-normal mb-0.5">{tx.status}</p>
                       <p className="text-gray-900 text-sm font-bold leading-snug whitespace-pre-line">
@@ -330,27 +368,24 @@ function AccountDetailsPage() {
                       </p>
                     </div>
                     <div className="text-right flex-shrink-0">
-                      <p className={`text-sm font-bold ${tx.debit ? 'text-[#1a6bbf]' : 'text-[#1a6bbf]'}`}>
-                        {tx.amount}
-                      </p>
+                      <p className="text-sm font-bold text-[#1a6bbf]">{tx.amount}</p>
                       <p className="text-gray-500 text-xs font-normal">{tx.balance}</p>
                     </div>
-                  </div>
-                  {i < transactions.length - 1 && <div className="border-t border-gray-100" />}
+                  </button>
+                  {i < transactions.length - 1 && <InsetDivider color={100} />}
                 </div>
               ))}
             </div>
           </div>
-          <div className="border-t border-gray-100">
-            <button type="button" className="w-full py-4 text-[#1a6bbf] font-bold text-sm tracking-wider">
-              ALL TRANSACTIONS
-            </button>
-          </div>
+          <InsetDivider color={100} />
+          <button type="button" className="w-full py-4 text-[#1a6bbf] font-bold text-sm tracking-wider">
+            ALL TRANSACTIONS
+          </button>
         </div>
 
         {/* ── Spending & Budgeting ── */}
         <div className="mx-4 mb-3 bg-white rounded-2xl shadow-sm overflow-hidden">
-          <div className="px-5 pt-5 pb-4 border-b border-gray-100">
+          <div className="px-5 pt-5 pb-4">
             <p className="text-gray-400 text-xs font-semibold tracking-widest uppercase mb-4">
               Spending &amp; Budgeting
             </p>
@@ -366,6 +401,7 @@ function AccountDetailsPage() {
               </p>
             </div>
           </div>
+          <InsetDivider color={100} />
           <button type="button" className="w-full py-4 text-[#1a6bbf] font-bold text-sm tracking-wider">
             TRACK SPENDING
           </button>
@@ -373,7 +409,7 @@ function AccountDetailsPage() {
 
         {/* ── Goals ── */}
         <div className="mx-4 mb-3 bg-white rounded-2xl shadow-sm overflow-hidden">
-          <div className="px-5 pt-5 pb-4 border-b border-gray-100">
+          <div className="px-5 pt-5 pb-4">
             <p className="text-gray-400 text-xs font-semibold tracking-widest uppercase mb-4">Goals</p>
             <div className="flex items-center gap-5">
               <img src={imgGoal} alt="Goals target" className="w-24 h-24 object-contain flex-shrink-0" />
@@ -382,6 +418,7 @@ function AccountDetailsPage() {
               </p>
             </div>
           </div>
+          <InsetDivider color={100} />
           <button type="button" className="w-full py-4 text-[#1a6bbf] font-bold text-sm tracking-wider">
             CREATE GOAL
           </button>
@@ -403,10 +440,11 @@ function AccountDetailsPage() {
           <div className="px-5 pt-4 pb-1">
             <p className="text-gray-400 text-xs font-semibold tracking-widest uppercase">Mobile Order</p>
           </div>
-          <button type="button" className="w-full flex items-center justify-between px-5 py-4 border-b border-gray-100">
+          <button type="button" className="w-full flex items-center justify-between px-5 py-4">
             <span className="text-gray-900 text-base font-medium">Foreign currency</span>
             <ChevronRight />
           </button>
+          <InsetDivider color={100} />
           <button type="button" className="w-full flex items-center justify-between px-5 py-4">
             <span className="text-gray-900 text-base font-medium">View activity</span>
             <ChevronRight />
@@ -419,17 +457,19 @@ function AccountDetailsPage() {
             <p className="text-gray-400 text-xs font-semibold tracking-widest uppercase">Account Management</p>
           </div>
 
-          <button type="button" className="w-full flex items-center justify-between px-5 py-4 border-b border-gray-100">
+          <button type="button" className="w-full flex items-center justify-between px-5 py-4">
             <span className="text-gray-900 text-base font-medium">Statements &amp; Documents</span>
             <ChevronRight />
           </button>
+          <InsetDivider color={100} />
 
-          <button type="button" className="w-full flex items-center justify-between px-5 py-4 border-b border-gray-100">
+          <button type="button" className="w-full flex items-center justify-between px-5 py-4">
             <span className="text-gray-900 text-base font-medium">Alerts</span>
             <ChevronRight />
           </button>
+          <InsetDivider color={100} />
 
-          <button type="button" className="w-full flex items-start justify-between px-5 py-4 border-b border-gray-100">
+          <button type="button" className="w-full flex items-start justify-between px-5 py-4">
             <div className="text-left">
               <p className="text-gray-900 text-base font-medium">Debit Card Settings</p>
               <p className="text-gray-500 text-sm font-normal leading-snug mt-0.5">
@@ -438,24 +478,28 @@ function AccountDetailsPage() {
             </div>
             <ChevronRight />
           </button>
+          <InsetDivider color={100} />
 
-          <button type="button" className="w-full flex items-center justify-between px-5 py-4 border-b border-gray-100">
+          <button type="button" className="w-full flex items-center justify-between px-5 py-4">
             <span className="text-gray-900 text-base font-medium">Beneficiaries</span>
             <ChevronRight />
           </button>
+          <InsetDivider color={100} />
 
-          <button type="button" className="w-full flex items-start justify-between px-5 py-4 border-b border-gray-100">
+          <button type="button" className="w-full flex items-start justify-between px-5 py-4">
             <div className="text-left">
               <p className="text-gray-900 text-base font-medium">Direct Deposit</p>
               <p className="text-gray-500 text-sm font-normal mt-0.5">It's secure and convenient. Set up one today.</p>
             </div>
             <ChevronRight />
           </button>
+          <InsetDivider color={100} />
 
-          <button type="button" className="w-full flex items-center justify-between px-5 py-4 border-b border-gray-100">
+          <button type="button" className="w-full flex items-center justify-between px-5 py-4">
             <span className="text-gray-900 text-base font-medium">Monthly Maintenance Fee info</span>
             <ChevronRight />
           </button>
+          <InsetDivider color={100} />
 
           <button type="button" className="w-full flex items-center justify-between px-5 py-4">
             <div className="text-left">
@@ -472,7 +516,7 @@ function AccountDetailsPage() {
 
         {/* ── Keep the Change® ── */}
         <div className="mx-4 mb-3 bg-white rounded-2xl shadow-sm overflow-hidden">
-          <div className="px-5 pt-5 pb-4 border-b border-gray-100">
+          <div className="px-5 pt-5 pb-4">
             <p className="text-gray-400 text-xs font-semibold tracking-widest uppercase mb-4">
               Keep the Change®
             </p>
@@ -485,6 +529,7 @@ function AccountDetailsPage() {
               </p>
             </div>
           </div>
+          <InsetDivider color={100} />
           <button type="button" className="w-full py-4 text-[#1a6bbf] font-bold text-sm tracking-wider">
             ENROLL
           </button>
@@ -496,13 +541,14 @@ function AccountDetailsPage() {
             <p className="text-gray-400 text-xs font-semibold tracking-widest uppercase">Digital Wallets</p>
           </div>
 
-          <button type="button" className="w-full flex items-center justify-between px-5 py-4 border-b border-gray-100">
+          <button type="button" className="w-full flex items-center justify-between px-5 py-4">
             <div className="flex items-center gap-3">
               <img src={imgApplePay} alt="Apple Pay" className="h-8 w-auto object-contain" />
               <span className="text-gray-900 text-base font-medium">Add card(s) to Apple Wallet</span>
             </div>
             <ChevronRight />
           </button>
+          <InsetDivider color={100} />
 
           <button type="button" className="w-full flex items-center justify-between px-5 py-4">
             <div className="flex items-center gap-3">
@@ -521,10 +567,11 @@ function AccountDetailsPage() {
           <div className="px-5 pt-4 pb-1">
             <p className="text-gray-400 text-xs font-semibold tracking-widest uppercase">Supplies</p>
           </div>
-          <button type="button" className="w-full flex items-center justify-between px-5 py-4 border-b border-gray-100">
+          <button type="button" className="w-full flex items-center justify-between px-5 py-4">
             <span className="text-gray-900 text-base font-medium">Order Account Supplies/Accessories</span>
             <ChevronRight />
           </button>
+          <InsetDivider color={100} />
           <button type="button" className="w-full flex items-center justify-between px-5 py-4">
             <span className="text-gray-900 text-base font-medium">Get copies of Cleared Checks</span>
             <ChevronRight />
@@ -555,11 +602,10 @@ function AccountDetailsPage() {
               <div key={i} className={`w-2 h-2 rounded-full ${i === 0 ? 'bg-gray-800' : 'bg-gray-300'}`} />
             ))}
           </div>
-          <div className="border-t border-gray-100">
-            <button type="button" className="w-full py-4 text-[#1a6bbf] font-semibold text-sm tracking-wider">
-              VIEW ALL DEALS
-            </button>
-          </div>
+          <InsetDivider color={100} />
+          <button type="button" className="w-full py-4 text-[#1a6bbf] font-semibold text-sm tracking-wider">
+            VIEW ALL DEALS
+          </button>
         </div>
 
         {/* ── Contact us ── */}
@@ -576,7 +622,8 @@ function AccountDetailsPage() {
       {/* ════════════════════════════════
           FIXED BOTTOM TAB BAR
       ════════════════════════════════ */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200">
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white">
+        <InsetDivider color={200} />
         <div className="flex">
           <button type="button" className="flex-1 flex flex-col items-center py-2 gap-0.5">
             <IconDollar active />
@@ -586,11 +633,11 @@ function AccountDetailsPage() {
             <IconTransfer />
             <span className="text-[11px] font-medium text-gray-500">Pay &amp; Transfer</span>
           </button>
-          <button type="button" className="flex-1 flex flex-col items-center py-2 gap-0.5">
+          <button type="button" onClick={() => navigate('/deposit-checks')} className="flex-1 flex flex-col items-center py-2 gap-0.5">
             <IconDeposit />
             <span className="text-[11px] font-medium text-gray-500">Deposit Checks</span>
           </button>
-          <button type="button" className="flex-1 flex flex-col items-center py-2 gap-0.5">
+          <button type="button" onClick={() => navigate('/invest')} className="flex-1 flex flex-col items-center py-2 gap-0.5">
             <IconPie />
             <span className="text-[11px] font-medium text-gray-500">Invest</span>
           </button>

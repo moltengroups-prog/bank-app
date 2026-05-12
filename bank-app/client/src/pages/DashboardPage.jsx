@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import LegalDisclosure from '../components/LegalDisclosure';
+import InsetDivider from '../components/InsetDivider';
 import logo from '../assets/logos/logo.png';
 import imgErica from '../assets/images/btn-erica-red.jpeg';
 import imgBanner from '../assets/images/banner-rate-reduction.jpeg';
@@ -89,13 +90,13 @@ function DashboardPage() {
 
         {/* Top bar */}
         <div className="flex items-center justify-between px-4 py-3">
-          <button type="button" className="flex flex-col items-center gap-1">
+          <button type="button" onClick={() => navigate('/menu')} className="flex flex-col items-center gap-1">
             <IconHamburger />
             <span className="text-[10px] font-medium text-gray-600">Menu</span>
           </button>
 
           <div className="flex items-end gap-5">
-            <button type="button" className="flex flex-col items-center gap-0.5">
+            <button type="button" onClick={() => navigate('/communications')} className="flex flex-col items-center gap-0.5">
               <div className="relative">
                 <IconEnvelope />
                 <span className="absolute -top-1.5 -right-1.5 bg-[#002D72] text-white text-[8px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
@@ -154,11 +155,12 @@ function DashboardPage() {
 
         {/* ── Greeting card ── */}
         <div className="mx-4 mb-4 bg-white rounded-2xl shadow-sm overflow-hidden">
-          <button type="button" className="w-full flex items-center justify-between px-5 py-4 border-b border-gray-100 active:bg-gray-50">
+          <button type="button" className="w-full flex items-center justify-between px-5 py-4 active:bg-gray-50">
             <span className="font-bold text-gray-900 text-base">Hello, Sutrina</span>
             <IconChevronRight />
           </button>
-          <button type="button" className="w-full flex items-start justify-between px-5 py-4 border-b border-gray-100 active:bg-gray-50">
+          <InsetDivider color={100} />
+          <button type="button" className="w-full flex items-start justify-between px-5 py-4 active:bg-gray-50">
             <div className="text-left pr-3">
               <p className="font-bold text-gray-900 text-base">Bank of Molten Life Plan&#174;</p>
               <p className="text-gray-500 text-sm mt-1 leading-relaxed">
@@ -167,6 +169,7 @@ function DashboardPage() {
             </div>
             <IconChevronRight />
           </button>
+          <InsetDivider color={100} />
           <button type="button" className="w-full flex items-center justify-between px-5 py-4 active:bg-gray-50">
             <span className="text-gray-800 text-base font-medium">My Rewards</span>
             <IconChevronRight />
@@ -183,15 +186,16 @@ function DashboardPage() {
           <button
             type="button"
             onClick={() => setBankingOpen(!bankingOpen)}
-            className="w-full flex items-center justify-between px-5 py-4 border-b border-gray-100"
+            className="w-full flex items-center justify-between px-5 py-4"
           >
             <span className="font-bold text-gray-900 text-base">Banking</span>
             <IconChevronUp flipped={!bankingOpen} />
           </button>
+          <InsetDivider color={100} />
 
           {bankingOpen && (
             <>
-              <div className="px-5 pt-4 pb-3 border-b border-gray-100">
+              <div className="px-5 pt-4 pb-3">
                 <div className="flex items-center gap-2 mb-1.5">
                   <img src={logo} alt="Bank of Molten" className="h-5 w-auto" />
                   <span className="font-bold text-gray-900 text-sm">Bank of Molten</span>
@@ -205,11 +209,12 @@ function DashboardPage() {
                   </span>
                 </div>
               </div>
+              <InsetDivider color={100} />
 
               <button
                 type="button"
                 onClick={() => navigate('/account')}
-                className="w-full flex items-center justify-between px-5 py-4 border-b border-gray-100 active:bg-gray-50"
+                className="w-full flex items-center justify-between px-5 py-4 active:bg-gray-50"
               >
                 <span className="text-gray-800 text-sm font-medium">joint</span>
                 <div className="flex items-center gap-2">
@@ -217,6 +222,7 @@ function DashboardPage() {
                   <IconChevronRight />
                 </div>
               </button>
+              <InsetDivider color={100} />
               <button
                 type="button"
                 onClick={() => navigate('/account')}
@@ -236,7 +242,7 @@ function DashboardPage() {
 
         {/* ── There's more to explore ── */}
         <div className="mx-4 mb-4 bg-white rounded-2xl shadow-sm overflow-hidden">
-          <div className="flex items-start gap-4 px-5 pt-5 pb-4 border-b border-gray-100">
+          <div className="flex items-start gap-4 px-5 pt-5 pb-4">
             <img src={imgNotepad} alt="Explore" className="w-14 h-14 object-contain flex-shrink-0" />
             <div>
               <p className="font-bold text-gray-900 text-base mb-1">There's more to explore</p>
@@ -245,6 +251,7 @@ function DashboardPage() {
               </p>
             </div>
           </div>
+          <InsetDivider color={100} />
           <div className="flex divide-x divide-gray-200">
             <button type="button" className="flex-1 py-4 text-[#1a6bbf] font-semibold text-sm tracking-wider active:bg-gray-50">
               OFFERS
@@ -297,19 +304,18 @@ function DashboardPage() {
             ))}
           </div>
 
-          <div className="border-t border-gray-100">
-            <button type="button" className="w-full py-4 text-[#1a6bbf] font-semibold text-sm tracking-wider active:bg-gray-50">
-              VIEW ALL DEALS
-            </button>
-          </div>
+          <InsetDivider color={100} />
+          <button type="button" className="w-full py-4 text-[#1a6bbf] font-semibold text-sm tracking-wider active:bg-gray-50">
+            VIEW ALL DEALS
+          </button>
         </div>
 
         {/* ── Account Information ── */}
         <div className="px-4 py-4">
           <p className="text-gray-500 text-base font-normal mb-4">Account information</p>
-          <div className="border-t border-gray-300 mb-6" />
+          <InsetDivider inset={false} className="mb-6" />
           <button type="button" className="text-[#1a6bbf] font-bold text-base">Account Balance Footnotes</button>
-          <div className="border-t border-gray-300 mt-6" />
+          <InsetDivider inset={false} className="mt-6" />
         </div>
 
         <LegalDisclosure />
@@ -318,7 +324,8 @@ function DashboardPage() {
       {/* ══════════════════════════════════
           FIXED BOTTOM TAB BAR
       ══════════════════════════════════ */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200">
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white">
+        <InsetDivider color={200} />
         <div className="flex">
           <button type="button" className="flex-1 flex flex-col items-center py-2 gap-0.5">
             <IconDollar active />
@@ -328,11 +335,11 @@ function DashboardPage() {
             <IconTransfer />
             <span className="text-[11px] font-medium text-gray-500">Pay &amp; Transfer</span>
           </button>
-          <button type="button" className="flex-1 flex flex-col items-center py-2 gap-0.5">
+          <button type="button" onClick={() => navigate('/deposit-checks')} className="flex-1 flex flex-col items-center py-2 gap-0.5">
             <IconDeposit />
             <span className="text-[11px] font-medium text-gray-500">Deposit Checks</span>
           </button>
-          <button type="button" className="flex-1 flex flex-col items-center py-2 gap-0.5">
+          <button type="button" onClick={() => navigate('/invest')} className="flex-1 flex flex-col items-center py-2 gap-0.5">
             <IconPie />
             <span className="text-[11px] font-medium text-gray-500">Invest</span>
           </button>

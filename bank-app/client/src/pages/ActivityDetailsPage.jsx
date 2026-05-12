@@ -1,11 +1,15 @@
 import React, { useEffect, useState } from 'react';
+import InsetDivider from '../components/InsetDivider';
 
 function DetailRow({ label, value, last }) {
   return (
-    <div className={`flex justify-between items-start px-5 py-4 ${last ? '' : 'border-b border-gray-200'}`}>
-      <span className="text-gray-900 text-base font-normal flex-shrink-0 mr-4">{label}</span>
-      <span className="text-gray-400 text-base text-right leading-snug">{value}</span>
-    </div>
+    <>
+      <div className="flex justify-between items-start px-5 py-4">
+        <span className="text-gray-900 text-base font-normal flex-shrink-0 mr-4">{label}</span>
+        <span className="text-gray-400 text-base text-right leading-snug">{value}</span>
+      </div>
+      {!last && <InsetDivider color={200} />}
+    </>
   );
 }
 
@@ -72,7 +76,8 @@ function ActivityDetailsPage({ transaction, onClose, rounded = true }) {
         </div>
 
         {/* Detail rows */}
-        <div className="bg-white border-t border-gray-200">
+        <InsetDivider color={200} />
+        <div className="bg-white">
           {rows.map((row, i) => (
             <DetailRow
               key={row.label}
