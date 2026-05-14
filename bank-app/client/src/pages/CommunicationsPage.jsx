@@ -1,5 +1,4 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 import LegalDisclosure from '../components/LegalDisclosure';
 import InsetDivider from '../components/InsetDivider';
 import AppHeader from '../components/AppHeader';
@@ -11,8 +10,6 @@ const IconChevronDown = () => (
 );
 
 function CommunicationsPage() {
-  const navigate = useNavigate();
-
   return (
     <div className="flex flex-col min-h-screen bg-gray-100 font-sans">
 

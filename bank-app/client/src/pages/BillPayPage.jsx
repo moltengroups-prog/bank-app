@@ -7,7 +7,6 @@ import LegalDisclosure from '../components/LegalDisclosure';
 // ── Mock data (replace with API calls) ──────────────────────────
 
 const PAYEES = [];          // future: fetched payee list
-const PAYMENTS = [];        // future: scheduled & recent payments
 const ACTIVITY = [];        // future: bill payment activity history
 
 // ── Sub-components ───────────────────────────────────────────────
