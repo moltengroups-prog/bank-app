@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import LegalDisclosure from '../components/LegalDisclosure';
 import InsetDivider from '../components/InsetDivider';
 import AppHeader from '../components/AppHeader';
+import FdicBanner from '../components/FdicBanner';
 import BottomNavigation from '../components/BottomNavigation';
 import EricaSearchBar from '../components/EricaSearchBar';
 import logo from '../assets/logos/logo.png';
@@ -99,14 +100,7 @@ function DashboardPage() {
                   <img src={logo} alt="Bank of Molten" className="h-5 w-auto" />
                   <span className="font-bold text-gray-900 text-sm">Bank of Molten</span>
                 </div>
-                <div className="flex items-start gap-2">
-                  <span className="border border-gray-700 text-gray-700 font-extrabold text-[9px] px-1 py-0.5 flex-shrink-0 leading-none">
-                    FDIC
-                  </span>
-                  <span className="text-gray-500 text-[10px] leading-snug">
-                    FDIC-Insured - Backed by the full faith and credit of the U.S. Government
-                  </span>
-                </div>
+                <FdicBanner size="sm" />
               </div>
               <InsetDivider color={100} />
 

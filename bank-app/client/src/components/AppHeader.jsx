@@ -58,6 +58,7 @@ function AppHeader({
   showEricaRight = false,
   ericaRightCount = 0,
   showCartRight = false,
+  showCartAndErica = false,
   showSpacer = false,
 
   // Sub-nav tabs
@@ -162,6 +163,16 @@ function AppHeader({
           <button type="button" className="flex items-center justify-center w-8 h-8 flex-shrink-0">
             <IconCart />
           </button>
+        )}
+
+        {/* Right: cart + Erica (StatementsAndDocumentsPage) */}
+        {showCartAndErica && (
+          <div className="flex items-center gap-3 flex-shrink-0">
+            <button type="button" className="flex items-center justify-center w-8 h-8">
+              <IconCart />
+            </button>
+            <img src={imgErica} alt="Erica assistant" className="w-10 h-10 rounded-full object-cover" />
+          </div>
         )}
 
         {/* Right: spacer (CommunicationsPage, MenuPage) */}

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import LegalDisclosure from '../components/LegalDisclosure';
 import InsetDivider from '../components/InsetDivider';
 import AppHeader from '../components/AppHeader';
+import FdicBanner from '../components/FdicBanner';
 import AccountPickerModal from '../components/AccountPickerModal';
 import AmountInputModal from '../components/AmountInputModal';
 import DatePickerModal from '../components/DatePickerModal';
@@ -44,16 +45,7 @@ function TransferPage() {
 
         {/* ── FDIC disclaimer ── */}
         <div className="bg-white px-4 pt-4 pb-4">
-          <p className="text-sm font-bold text-gray-900 mb-2">Bank of Molten deposit products:</p>
-          <div className="flex items-start gap-2 mb-2">
-            <span className="inline-flex items-center justify-center border-2 border-[#1a6bbf] text-[#1a6bbf] font-black text-[11px] px-1 py-0.5 leading-none flex-shrink-0 mt-0.5 tracking-tight">
-              FDIC
-            </span>
-            <p className="text-xs text-gray-500 italic leading-snug">
-              FDIC-Insured &#8211; Backed by the full faith and credit of the U.S. Government
-            </p>
-          </div>
-          <p className="text-sm font-bold text-gray-900">Investment products are not FDIC-Insured.</p>
+          <FdicBanner label="Bank of Molten deposit products:" labelBold showInvestment />
         </div>
 
         <InsetDivider />
