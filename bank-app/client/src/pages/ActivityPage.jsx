@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import LegalDisclosure from '../components/LegalDisclosure';
 import InsetDivider from '../components/InsetDivider';
 import AppHeader from '../components/AppHeader';
@@ -53,7 +52,6 @@ const transactions = [
 ];
 
 function ActivityPage() {
-  const navigate = useNavigate();
   const [selectedTx, setSelectedTx] = useState(null);
 
   return (

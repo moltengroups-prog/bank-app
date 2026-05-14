@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
 import EricaSearchBar from '../components/EricaSearchBar';
 import LegalDisclosure from '../components/LegalDisclosure';
@@ -253,7 +252,6 @@ function LinkRow({ label, subtitle, last = false }) {
 // ── Page ─────────────────────────────────────────────────────────
 
 function SecurityCenterPage() {
-  const navigate = useNavigate();
   const [touchIdEnabled, setTouchIdEnabled] = useState(true);
   const [quickBalanceEnabled, setQuickBalanceEnabled] = useState(false);
 
