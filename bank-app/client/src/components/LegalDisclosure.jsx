@@ -7,7 +7,7 @@ function LegalDisclosure() {
       {/* Legal info and disclosures */}
       <InsetDivider />
       <div className="px-4 pt-4 pb-4">
-        <h3 className="font-bold text-xl text-gray-900 mb-4">Legal info and disclosures</h3>
+        <h3 className="font-semibold text-xl text-gray-900 mb-4">Legal info and disclosures</h3>
         <p className="text-sm text-gray-700 mb-3">
           Investment, insurance and annuity products:
         </p>

@@ -6,6 +6,7 @@ import AppHeader from '../components/AppHeader';
 import BottomNavigation from '../components/BottomNavigation';
 import EricaSearchBar from '../components/EricaSearchBar';
 import ActivityDetailsPage from './ActivityDetailsPage';
+import BillPayEnrollModal from '../components/BillPayEnrollModal';
 
 import imgTransfer from '../assets/images/transfer-icon.png';
 import imgZelle    from '../assets/images/zelle-logo.png';
@@ -37,6 +38,7 @@ const transactions = [
 function PayAndTransferPage() {
   const navigate = useNavigate();
   const [selectedTx, setSelectedTx] = useState(null);
+  const [billPayOpen, setBillPayOpen] = useState(false);
 
   return (
     <div className="flex flex-col h-screen bg-gray-100 font-sans">
@@ -84,6 +86,7 @@ function PayAndTransferPage() {
             {/* Pay Bills */}
             <button
               type="button"
+              onClick={() => setBillPayOpen(true)}
               className="flex flex-col items-center justify-center py-8 px-4 active:bg-gray-50"
             >
               <img src={imgPayBills} alt="Pay Bills" className="w-14 h-14 object-contain mb-3" />
@@ -94,6 +97,7 @@ function PayAndTransferPage() {
             {/* Wire */}
             <button
               type="button"
+              onClick={() => navigate('/wire-transfer')}
               className="flex flex-col items-center justify-center py-8 px-4 active:bg-gray-50"
             >
               <img src={imgWire} alt="Wire" className="w-14 h-14 object-contain mb-3" />
@@ -152,6 +156,12 @@ function PayAndTransferPage() {
       </div>
 
       <BottomNavigation activeTab="pay-transfer" />
+
+      <BillPayEnrollModal
+        isOpen={billPayOpen}
+        onClose={() => setBillPayOpen(false)}
+        onContinue={() => { setBillPayOpen(false); navigate('/bill-pay'); }}
+      />
 
       {/* ── Transaction detail modal ── */}
       <ActivityDetailsPage

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import InsetDivider from '../components/InsetDivider';
+import FdicBanner from '../components/FdicBanner';
 import logo from '../assets/logos/logo.png';
 import imgCashback from '../assets/images/box-cashback.jpeg';
 import imgCD from '../assets/images/box-cd.jpeg';
@@ -95,17 +96,7 @@ function SignInPage() {
 
       {/* ── FDIC ── */}
       <div className="px-4 pb-5">
-        <p className="text-gray-500 text-sm italic mb-2">
-          Bank of Molten deposit products:
-        </p>
-        <div className="flex items-start gap-3">
-          <span className="border-2 border-gray-800 text-gray-800 font-extrabold text-xs px-1.5 py-0.5 flex-shrink-0">
-            FDIC
-          </span>
-          <p className="text-xs text-gray-600 leading-snug">
-            FDIC-Insured - Backed by the full faith and credit of the U.S. Government
-          </p>
-        </div>
+        <FdicBanner label="Bank of Molten deposit products:" />
       </div>
 
       {/* ── Promo Cards 2×2 ── */}

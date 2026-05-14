@@ -30,12 +30,13 @@ const IconHelpCircle = () => (
   </svg>
 );
 
-function MenuRow({ label, subtitle }) {
+function MenuRow({ label, subtitle, onClick }) {
   return (
     <>
       <InsetDivider color={200} />
       <button
         type="button"
+        onClick={onClick}
         className="w-full flex items-center justify-between px-5 py-4 text-left active:bg-gray-50"
       >
         <div>
@@ -68,7 +69,7 @@ function MenuPage() {
             <span className="text-xl font-bold text-gray-900">Profile</span>
           </div>
           <MenuRow label="Settings" />
-          <MenuRow label="Security Center" />
+          <MenuRow label="Security Center" onClick={() => navigate('/security-center')} />
         </div>
 
         {/* ── Statements and Documents card ── */}
@@ -77,8 +78,8 @@ function MenuPage() {
             <IconDocument />
             <span className="text-xl font-bold text-gray-900">Statements and Documents</span>
           </div>
-          <MenuRow label="Statements and Documents" />
-          <MenuRow label="Go Paperless" />
+          <MenuRow label="Statements and Documents" onClick={() => navigate('/statements-documents')} />
+          <MenuRow label="Go Paperless" onClick={() => navigate('/go-paperless')} />
         </div>
 
         {/* ── Bank of Molten card ── */}
