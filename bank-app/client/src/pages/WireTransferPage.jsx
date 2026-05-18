@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Lightbulb } from 'lucide-react';
 import AppHeader from '../components/AppHeader';
 import LegalDisclosure from '../components/LegalDisclosure';
 import imgHero from '../assets/images/wire-transfer-hero.jpg';
@@ -7,37 +8,21 @@ import imgHero from '../assets/images/wire-transfer-hero.jpg';
 // ── Mock data ────────────────────────────────────────────────────
 
 const CURRENCIES = [
-  { flag: '🇮🇳', country: 'India',         code: 'INR' },
-  { flag: '🇬🇧', country: 'Great Britain',  code: 'GBP' },
-  { flag: '🇲🇽', country: 'Mexico',         code: 'MXN' },
-  { flag: '🇨🇦', country: 'Canada',         code: 'CAD' },
+  { countryCode: 'in', country: 'India',         code: 'INR' },
+  { countryCode: 'gb', country: 'Great Britain',  code: 'GBP' },
+  { countryCode: 'mx', country: 'Mexico',         code: 'MXN' },
+  { countryCode: 'ca', country: 'Canada',         code: 'CAD' },
 ];
 
 // ── Sub-components ───────────────────────────────────────────────
 
-const IconLightbulb = () => (
-  <svg
-    className="w-5 h-5 text-[#1a6bbf] flex-shrink-0"
-    fill="none"
-    stroke="currentColor"
-    viewBox="0 0 24 24"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={1.5}
-      d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m1.343-5.657l-.707-.707M12 21v-1M7 17a5 5 0 115 0v-1H7v1z"
-    />
-  </svg>
-);
-
-function CurrencyCard({ flag, country, code }) {
+function CurrencyCard({ countryCode, country, code }) {
   return (
     <button
       type="button"
       className="bg-white rounded-2xl border border-gray-200 flex items-center gap-3 px-4 py-4 text-left active:bg-gray-50 shadow-sm"
     >
-      <span className="text-3xl leading-none flex-shrink-0">{flag}</span>
+      <span className={`fi fi-${countryCode} text-3xl flex-shrink-0`} style={{ width: '2em', height: '1.5em', backgroundSize: 'cover', borderRadius: 3 }} />
       <div>
         <p className="text-base font-semibold text-gray-900 leading-snug">{country}</p>
         <p className="text-sm text-gray-400 leading-snug">{code}</p>
@@ -54,7 +39,7 @@ function WireTransferPage() {
   return (
     <div className="flex flex-col min-h-screen bg-white font-sans">
 
-      <AppHeader showBackButton title="Wire" showEricaRight ericaRightCount={4} />
+      <AppHeader showBackButton onBack={() => navigate('/pay-transfer')} title="Wire" showEricaRight ericaRightCount={4} />
 
       <div className="flex-1 pt-[64px] overflow-y-auto">
 
@@ -84,7 +69,7 @@ function WireTransferPage() {
           {/* Info row */}
           <div className="flex items-start gap-3 w-full">
             <div className="w-9 h-9 rounded-full border border-[#1a6bbf] flex items-center justify-center flex-shrink-0">
-              <IconLightbulb />
+              <Lightbulb className="w-5 h-5 text-[#1a6bbf]" strokeWidth={1.5} />
             </div>
             <p className="text-sm text-gray-700 leading-snug pt-0.5">
               Check out what you&#39;ll need to know before sending a wire.{' '}

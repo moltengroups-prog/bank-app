@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import LegalDisclosure from '../components/LegalDisclosure';
 import InsetDivider from '../components/InsetDivider';
@@ -12,6 +12,9 @@ import imgNotepad from '../assets/images/icon-notepad.jpeg';
 import imgAdidas from '../assets/images/logo-adidas.png';
 import imgLowes from '../assets/images/logo-lowes.png';
 import imgUlta from '../assets/images/logo-ulta.png';
+import { useDashboardStore } from '../store/dashboardStore';
+import { useAuthStore } from '../store/authStore';
+import { formatBalance } from '../utils/format';
 
 const deals = [
   { logo: imgAdidas, name: 'Adidas',      cashback: '5% Cash Back' },
@@ -31,6 +34,13 @@ const IconChevronUp = ({ flipped }) => (
 function DashboardPage() {
   const navigate = useNavigate();
   const [bankingOpen, setBankingOpen] = useState(true);
+
+  const { accounts, loadingAccounts, fetchAccounts } = useDashboardStore();
+  const user = useAuthStore((s) => s.user);
+
+  useEffect(() => {
+    fetchAccounts();
+  }, [fetchAccounts]);
 
   return (
     <div className="flex flex-col h-screen bg-gray-100 font-sans">
@@ -56,7 +66,9 @@ function DashboardPage() {
         {/* ── Greeting card ── */}
         <div className="mx-4 mb-4 bg-white rounded-2xl shadow-sm overflow-hidden">
           <button type="button" className="w-full flex items-center justify-between px-5 py-4 active:bg-gray-50">
-            <span className="font-bold text-gray-900 text-base">Hello, Sutrina</span>
+            <span className="font-bold text-gray-900 text-base">
+              Hello{user?.firstName ? `, ${user.firstName}` : ''}
+            </span>
             <IconChevronRight />
           </button>
           <InsetDivider color={100} />
@@ -104,31 +116,35 @@ function DashboardPage() {
               </div>
               <InsetDivider color={100} />
 
-              <button
-                type="button"
-                onClick={() => navigate('/account')}
-                className="w-full flex items-center justify-between px-5 py-4 active:bg-gray-50"
-              >
-                <span className="text-gray-800 text-sm font-medium">joint</span>
-                <div className="flex items-center gap-2">
-                  <span className="font-bold text-gray-900 text-base">$664.89</span>
-                  <IconChevronRight />
-                </div>
-              </button>
-              <InsetDivider color={100} />
-              <button
-                type="button"
-                onClick={() => navigate('/account')}
-                className="w-full flex items-center justify-between px-5 py-4 active:bg-gray-50"
-              >
-                <span className="text-gray-800 text-sm font-medium text-left leading-snug">
-                  Adv SafeBalance<br />Banking - 3580
-                </span>
-                <div className="flex items-center gap-2">
-                  <span className="font-bold text-gray-900 text-base">$202.00</span>
-                  <IconChevronRight />
-                </div>
-              </button>
+              {loadingAccounts ? (
+                [1, 2].map((n) => (
+                  <div key={n} className="flex items-center justify-between px-5 py-4 animate-pulse">
+                    <div className="h-3 bg-gray-100 rounded w-32" />
+                    <div className="h-4 bg-gray-100 rounded w-20" />
+                  </div>
+                ))
+              ) : accounts.length === 0 ? (
+                <p className="px-5 py-4 text-gray-400 text-sm">No accounts found.</p>
+              ) : (
+                accounts.map((acc, i) => (
+                  <React.Fragment key={acc.id}>
+                    <button
+                      type="button"
+                      onClick={() => navigate('/account', { state: { account: acc } })}
+                      className="w-full flex items-center justify-between px-5 py-4 active:bg-gray-50"
+                    >
+                      <span className="text-gray-800 text-sm font-medium">{acc.accountName}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-gray-900 text-base">
+                          {formatBalance(acc.availableBalance)}
+                        </span>
+                        <IconChevronRight />
+                      </div>
+                    </button>
+                    {i < accounts.length - 1 && <InsetDivider color={100} />}
+                  </React.Fragment>
+                ))
+              )}
             </>
           )}
         </div>

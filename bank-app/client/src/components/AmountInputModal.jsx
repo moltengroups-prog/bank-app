@@ -1,9 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import imgErica from '../assets/images/btn-erica-red.jpeg';
 import LegalDisclosure from './LegalDisclosure';
 import InsetDivider from './InsetDivider';
 
 function AmountInputModal({ open, onClose, value, onDone }) {
+  const navigate = useNavigate();
   const [animated, setAnimated] = useState(false);
   const [draft, setDraft] = useState(value);
   const inputRef = useRef(null);
@@ -48,12 +50,12 @@ function AmountInputModal({ open, onClose, value, onDone }) {
         <div className="flex-shrink-0 bg-white flex items-center justify-between px-4 py-3 shadow-sm">
           <div className="w-10" />
           <span className="text-base font-normal text-gray-500 tracking-wide">Amount</span>
-          <div className="relative flex-shrink-0">
+          <button type="button" onClick={() => navigate('/erica-chat')} className="relative flex-shrink-0">
             <img src={imgErica} alt="Erica" className="w-10 h-10 rounded-full object-cover" />
             <span className="absolute -top-1 -right-1 bg-[#002D72] text-white text-[8px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
               3
             </span>
-          </div>
+          </button>
         </div>
 
         {/* Scrollable content */}

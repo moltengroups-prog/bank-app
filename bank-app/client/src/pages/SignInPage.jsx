@@ -7,10 +7,33 @@ import imgCashback from '../assets/images/box-cashback.jpeg';
 import imgCD from '../assets/images/box-cd.jpeg';
 import imgQR from '../assets/images/box-qr.jpeg';
 import imgBonus from '../assets/images/box-bonus.jpeg';
+import { useAuthStore } from '../store/authStore';
 
 function SignInPage() {
-  const [touchId, setTouchId] = useState(false);
-  const navigate = useNavigate();
+  const [touchId,  setTouchId]  = useState(false);
+  const [email,    setEmail]    = useState('');
+  const [password, setPassword] = useState('');
+  const [loading,  setLoading]  = useState(false);
+  const [error,    setError]    = useState('');
+  const navigate   = useNavigate();
+  const authLogin  = useAuthStore((s) => s.login);
+
+  async function handleLogin() {
+    if (!email || !password) {
+      setError('Please enter your email and password.');
+      return;
+    }
+    setLoading(true);
+    setError('');
+    try {
+      await authLogin(email, password);
+      navigate('/dashboard');
+    } catch (err) {
+      setError(err.message || 'Invalid credentials. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col font-sans">
@@ -33,8 +56,11 @@ function SignInPage() {
           </label>
           <div className="flex items-center border-b border-gray-300 pb-2">
             <input
-              type="text"
-              defaultValue="Trina****"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Enter your email"
+              autoComplete="email"
               className="flex-1 text-[#1a6bbf] font-medium text-base focus:outline-none bg-transparent"
             />
             <span className="text-gray-400 text-xl ml-2">›</span>
@@ -49,6 +75,9 @@ function SignInPage() {
           <div className="border-b border-gray-300 pb-6">
             <input
               type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              autoComplete="current-password"
               className="w-full text-base focus:outline-none bg-transparent"
             />
           </div>
@@ -68,13 +97,19 @@ function SignInPage() {
           <span className="text-[#1a6bbf] font-medium text-sm">Set up Touch ID</span>
         </div>
 
+        {/* Error */}
+        {error && (
+          <p className="text-red-500 text-sm text-center mb-4 leading-snug">{error}</p>
+        )}
+
         {/* Log In Button */}
         <button
           type="button"
-          onClick={() => navigate('/dashboard')}
-          className="w-full bg-[#002D72] text-white font-bold text-base tracking-widest py-4 rounded-full mb-5"
+          onClick={handleLogin}
+          disabled={loading}
+          className="w-full bg-[#002D72] text-white font-bold text-base tracking-widest py-4 rounded-full mb-5 disabled:opacity-60"
         >
-          LOG IN
+          {loading ? 'Signing in…' : 'LOG IN'}
         </button>
 
         {/* Forgot */}

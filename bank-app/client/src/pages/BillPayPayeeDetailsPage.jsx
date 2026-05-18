@@ -3,14 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
 import LegalDisclosure from '../components/LegalDisclosure';
 import StepIndicator from '../components/StepIndicator';
+import StateSelect from '../components/StateSelect';
 
 // ── Sub-components ───────────────────────────────────────────────
-
-const IconChevronRight = () => (
-  <svg className="w-4 h-4 text-[#1a6bbf] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-  </svg>
-);
 
 function FormRow({ label, subtitle, placeholder, value, onChange, type = 'text', inputMode }) {
   return (
@@ -28,29 +23,6 @@ function FormRow({ label, subtitle, placeholder, value, onChange, type = 'text',
           placeholder={placeholder}
           className="flex-1 min-w-0 text-right bg-transparent outline-none text-[#1a6bbf] placeholder-[#1a6bbf] text-base"
         />
-      </div>
-      <div className="border-b border-gray-100" />
-    </>
-  );
-}
-
-function StateRow({ value, onSelect }) {
-  return (
-    <>
-      <div className="flex items-center bg-white px-4 py-5 min-h-[60px]">
-        <div className="w-36 flex-shrink-0">
-          <p className="text-base text-gray-900 leading-snug">State</p>
-        </div>
-        <button
-          type="button"
-          onClick={onSelect}
-          className="flex-1 flex items-center justify-end gap-1 min-w-0"
-        >
-          <span className="text-[#1a6bbf] text-base truncate">
-            {value || 'Select payee state'}
-          </span>
-          <IconChevronRight />
-        </button>
       </div>
       <div className="border-b border-gray-100" />
     </>
@@ -150,11 +122,9 @@ function BillPayPayeeDetailsPage() {
             value={form.city}
             onChange={set('city')}
           />
-          <StateRow
+          <StateSelect
             value={form.state}
-            onSelect={() => {
-              // future: open state picker sheet
-            }}
+            onChange={(abbr) => setForm(prev => ({ ...prev, state: abbr }))}
           />
           <FormRow
             label="ZIP Code"

@@ -1,8 +1,11 @@
-import React from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import LegalDisclosure from '../components/LegalDisclosure';
 import AppHeader from '../components/AppHeader';
 import BottomNavigation from '../components/BottomNavigation';
+import { useDashboardStore } from '../store/dashboardStore';
+import { useNotificationStore } from '../store/notificationStore';
+import { formatBalance } from '../utils/format';
 
 import imgAvailBal    from '../assets/images/available-balance.png';
 import imgAvgSpend    from '../assets/images/spending-chart.jpeg';
@@ -24,7 +27,39 @@ function DashCard({ children, onClick }) {
 }
 
 function MainDashboardPage() {
-  const navigate = useNavigate();
+  const navigate     = useNavigate();
+  const { accounts, transactions, loadingAccounts, loadingTransactions, fetchAccounts, fetchTransactions } = useDashboardStore();
+  const { unreadCount, fetchUnreadCount } = useNotificationStore();
+  const checking     = accounts.find((a) => a.accountType === 'checking') || accounts[0] || null;
+
+  useEffect(() => {
+    fetchAccounts();
+    fetchUnreadCount();
+    // Fetch last 90 days for avg spend calculation
+    const since = new Date();
+    since.setDate(since.getDate() - 90);
+    fetchTransactions({ startDate: since.toISOString().split('T')[0], limit: 500 });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Average monthly spend: sum all debit amounts grouped by calendar month, then average
+  const avgMonthlySpend = useMemo(() => {
+    const debits = transactions.filter(
+      (t) => t.transactionType === 'debit' || t.amount < 0
+    );
+    if (debits.length === 0) return null;
+
+    const byMonth = {};
+    debits.forEach((t) => {
+      const d = new Date(t.date || t.createdAt);
+      const key = `${d.getFullYear()}-${d.getMonth()}`;
+      const amt = Math.abs(t.amount);
+      byMonth[key] = (byMonth[key] || 0) + amt;
+    });
+
+    const monthTotals = Object.values(byMonth);
+    return Math.round(monthTotals.reduce((s, v) => s + v, 0) / monthTotals.length);
+  }, [transactions]);
 
   return (
     <div className="flex flex-col h-screen bg-gray-100 font-sans">
@@ -58,8 +93,14 @@ function MainDashboardPage() {
               alt="Available balance"
               className="w-24 h-20 object-contain mb-1"
             />
-            <p className="text-gray-500 text-sm font-normal mb-1">joint</p>
-            <p className="text-gray-900 text-2xl font-bold leading-tight">$664.89</p>
+            <p className="text-gray-500 text-sm font-normal mb-1">
+              {checking?.accountName ?? 'joint'}
+            </p>
+            <p className="text-gray-900 text-2xl font-bold leading-tight">
+              {loadingAccounts
+                ? <span className="text-gray-300 animate-pulse">$——.——</span>
+                : formatBalance(checking?.availableBalance)}
+            </p>
             <p className="text-gray-400 text-xs font-normal mt-1">Available balance</p>
           </DashCard>
 
@@ -73,9 +114,15 @@ function MainDashboardPage() {
             <p className="text-gray-500 text-xs font-normal leading-snug mb-1">
               On Average You Spend
             </p>
-            <p className="text-gray-900 text-2xl font-bold leading-tight">$782</p>
+            {loadingTransactions ? (
+              <span className="text-gray-300 text-2xl font-bold animate-pulse">$——</span>
+            ) : (
+              <p className="text-gray-900 text-2xl font-bold leading-tight">
+                {avgMonthlySpend != null ? `$${avgMonthlySpend.toLocaleString()}` : '—'}
+              </p>
+            )}
             <p className="text-gray-400 text-xs font-normal mt-1 leading-snug">
-              Less Than You Deposit
+              Per Month
             </p>
           </DashCard>
 
@@ -103,7 +150,7 @@ function MainDashboardPage() {
               />
             </div>
             <p className="text-gray-900 text-sm font-semibold mb-1">Alerts</p>
-            <p className="text-gray-900 text-3xl font-bold leading-tight">0</p>
+            <p className="text-gray-900 text-3xl font-bold leading-tight">{unreadCount}</p>
             <p className="text-gray-400 text-xs font-normal mt-1">Unread</p>
           </DashCard>
 

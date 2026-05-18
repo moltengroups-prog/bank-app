@@ -4,12 +4,26 @@
   "type": "module",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "dev": "nodemon --signal SIGTERM server.js",
+    "start": "node server.js",
+    "kill": "lsof -ti:8000 | xargs kill -9 2>/dev/null; echo 'Port 8000 cleared'",
+    "restart": "npm run kill && npm run dev",
+    "seed": "node database/seedDemoData.js",
+    "demo": "node database/generateDemoUser.js"
   },
   "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
-    "mongoose": "^9.6.2"
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^9.6.2",
+    "morgan": "^1.10.1",
+    "socket.io": "^4.8.3"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
   }
 }

@@ -7,19 +7,19 @@ import WireFlowFooter from '../components/WireFlowFooter';
 // ── Country data ─────────────────────────────────────────────────
 
 const COUNTRIES = [
-  { code: 'US', name: 'United States',  flag: '🇺🇸', featured: true  },
-  { code: 'IN', name: 'India',          flag: '🇮🇳', featured: false },
-  { code: 'MX', name: 'Mexico',         flag: '🇲🇽', featured: false },
-  { code: 'CA', name: 'Canada',         flag: '🇨🇦', featured: false },
-  { code: 'GB', name: 'Great Britain',  flag: '🇬🇧', featured: false },
-  { code: 'CN', name: 'China',          flag: '🇨🇳', featured: false },
-  { code: 'ES', name: 'Spain',          flag: '🇪🇸', featured: false },
-  { code: 'DE', name: 'Germany',        flag: '🇩🇪', featured: false },
-  { code: 'FR', name: 'France',         flag: '🇫🇷', featured: false },
-  { code: 'KR', name: 'Korea',          flag: '🇰🇷', featured: false },
-  { code: 'PH', name: 'Philippines',    flag: '🇵🇭', featured: false },
-  { code: 'IT', name: 'Italy',          flag: '🇮🇹', featured: false },
-  { code: 'CO', name: 'Colombia',       flag: '🇨🇴', featured: false },
+  { code: 'US', name: 'United States',  featured: true  },
+  { code: 'IN', name: 'India',          featured: false },
+  { code: 'MX', name: 'Mexico',         featured: false },
+  { code: 'CA', name: 'Canada',         featured: false },
+  { code: 'GB', name: 'Great Britain',  featured: false },
+  { code: 'CN', name: 'China',          featured: false },
+  { code: 'ES', name: 'Spain',          featured: false },
+  { code: 'DE', name: 'Germany',        featured: false },
+  { code: 'FR', name: 'France',         featured: false },
+  { code: 'KR', name: 'Korea',          featured: false },
+  { code: 'PH', name: 'Philippines',    featured: false },
+  { code: 'IT', name: 'Italy',          featured: false },
+  { code: 'CO', name: 'Colombia',       featured: false },
 ];
 
 // ── Sub-components ───────────────────────────────────────────────
@@ -46,6 +46,9 @@ function SearchInput({ value, onChange }) {
 }
 
 function CountryCard({ country, selected, onSelect, fullWidth = false }) {
+  const flagSize = fullWidth
+    ? { width: '3em', height: '2.25em', fontSize: '1rem' }
+    : { width: '2.67em', height: '2em', fontSize: '1rem' };
   return (
     <button
       type="button"
@@ -58,9 +61,10 @@ function CountryCard({ country, selected, onSelect, fullWidth = false }) {
           : 'border border-gray-100 shadow-sm'
       }`}
     >
-      <span className={`leading-none flex-shrink-0 ${fullWidth ? 'text-5xl' : 'text-4xl'}`}>
-        {country.flag}
-      </span>
+      <span
+        className={`fi fi-${country.code.toLowerCase()} flex-shrink-0`}
+        style={{ ...flagSize, backgroundSize: 'cover', borderRadius: 3 }}
+      />
       <span className={`font-semibold text-gray-900 ${fullWidth ? 'text-base' : 'text-sm'}`}>
         {country.name}
       </span>

@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import imgErica from '../assets/images/btn-erica-red.jpeg';
 import InsetDivider from './InsetDivider';
+import { useNotificationStore } from '../store/notificationStore';
 
 const IconHamburger = () => (
   <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -57,6 +58,7 @@ function AppHeader({
   // Right side: single elements (detail pages)
   showEricaRight = false,
   ericaRightCount = 0,
+  showChatRight = false,
   showCartRight = false,
   showCartAndErica = false,
   showSpacer = false,
@@ -71,115 +73,160 @@ function AppHeader({
   const gapClass = gapClasses[iconGap] || 'gap-4';
   const hasRightGroup = showInbox || showProducts || showLogout || showEricaInline;
 
+  const { unreadCount: liveCount, fetchUnreadCount } = useNotificationStore();
+  const displayCount = showInbox ? liveCount : 0;
+
+  useEffect(() => {
+    if (showInbox) fetchUnreadCount();
+  }, [showInbox, fetchUnreadCount]); // eslint-disable-line react-hooks/exhaustive-deps
+
   return (
     <div className="fixed top-0 left-0 right-0 z-50 bg-white shadow-sm">
-      <div className="flex items-center justify-between px-4 py-3">
+      {/*
+        Layout: relative container so the title can be absolutely centered.
+        Left and right slots stay in the flex flow; title is removed from it
+        so icon widths never shift the heading. Both slots get z-10 to remain
+        clickable above the absolutely-positioned title layer.
+      */}
+      <div className="relative flex items-center px-4 py-3">
 
-        {/* Left */}
-        {showMenuButton && (
-          <button
-            type="button"
-            onClick={() => navigate('/menu')}
-            className="flex flex-col items-center gap-1 flex-shrink-0"
-          >
-            <IconHamburger />
-            <span className="text-[10px] font-medium text-gray-600">Menu</span>
-          </button>
-        )}
-        {showBackButton && (
-          <button
-            type="button"
-            onClick={handleBack}
-            className="flex items-center justify-center w-8 h-8 flex-shrink-0"
-          >
-            <IconBack />
-          </button>
-        )}
+        {/* ── Left slot ─────────────────────────────────────────── */}
+        <div className="relative z-10 flex-shrink-0">
+          {showMenuButton && (
+            <button
+              type="button"
+              onClick={() => navigate('/menu')}
+              className="flex flex-col items-center gap-1"
+            >
+              <IconHamburger />
+              <span className="text-[10px] font-medium text-gray-600">Menu</span>
+            </button>
+          )}
+          {showBackButton && (
+            <button
+              type="button"
+              onClick={handleBack}
+              className="flex items-center justify-center w-8 h-8"
+            >
+              <IconBack />
+            </button>
+          )}
+        </div>
 
-        {/* Center */}
+        {/* ── Title — absolutely centered, never shifts with icon widths ── */}
         {title && (
-          <span className="text-base font-normal text-gray-500 tracking-wide">{title}</span>
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <span className="text-base font-normal text-gray-500 tracking-wide px-16 text-center truncate">
+              {title}
+            </span>
+          </div>
         )}
 
-        {/* Right: grouped icons */}
-        {hasRightGroup && (
-          <div className={`flex items-end ${gapClass} flex-shrink-0`}>
-            {showEricaInline && (
-              <div className="relative flex-shrink-0 mb-3 -translate-x-1">
-                <img src={imgErica} alt="Erica assistant" className="w-8 h-8 rounded-full object-cover" />
-                {ericaInlineCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-[#002D72] text-white text-[8px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
-                    {ericaInlineCount}
-                  </span>
-                )}
-              </div>
-            )}
-            {showInbox && (
-              <button
-                type="button"
-                onClick={() => navigate('/communications')}
-                className="flex flex-col items-center gap-0.5"
-              >
-                <div className="relative">
-                  <IconEnvelope />
-                  {inboxCount > 0 && (
-                    <span className="absolute -top-1.5 -right-1.5 bg-[#002D72] text-white text-[8px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
-                      {inboxCount}
+        {/* ── Right slot — pushed to the trailing edge with ml-auto ─── */}
+        <div className="relative z-10 ml-auto flex-shrink-0 flex items-center">
+
+          {/* Grouped icons (main dashboard pages) */}
+          {hasRightGroup && (
+            <div className={`flex items-end ${gapClass}`}>
+              {showEricaInline && (
+                <button
+                  type="button"
+                  onClick={() => navigate('/erica-chat')}
+                  className="relative flex-shrink-0 mb-3 -translate-x-1"
+                >
+                  <img src={imgErica} alt="Erica assistant" className="w-8 h-8 rounded-full object-cover" />
+                  {ericaInlineCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-[#002D72] text-white text-[8px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                      {ericaInlineCount}
                     </span>
                   )}
-                </div>
-                <span className="text-[10px] font-medium text-gray-600">Inbox</span>
-              </button>
-            )}
-            {showProducts && (
-              <button type="button" className="flex flex-col items-center gap-0.5">
-                <IconCart />
-                <span className="text-[10px] font-medium text-gray-600">Products</span>
-              </button>
-            )}
-            {showLogout && (
-              <button type="button" className="flex flex-col items-center gap-0.5">
-                <IconLogOut />
-                <span className="text-[10px] font-medium text-gray-600">Log Out</span>
-              </button>
-            )}
-          </div>
-        )}
+                </button>
+              )}
+              {showInbox && (
+                <button
+                  type="button"
+                  onClick={() => navigate('/communications')}
+                  className="flex flex-col items-center gap-0.5"
+                >
+                  <div className="relative">
+                    <IconEnvelope />
+                    {displayCount > 0 && (
+                      <span className="absolute -top-1.5 -right-1.5 bg-[#002D72] text-white text-[8px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                        {displayCount > 99 ? '99+' : displayCount}
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-[10px] font-medium text-gray-600">Inbox</span>
+                </button>
+              )}
+              {showProducts && (
+                <button type="button" onClick={() => navigate('/products-offers')} className="flex flex-col items-center gap-0.5">
+                  <IconCart />
+                  <span className="text-[10px] font-medium text-gray-600">Products</span>
+                </button>
+              )}
+              {showLogout && (
+                <button type="button" className="flex flex-col items-center gap-0.5">
+                  <IconLogOut />
+                  <span className="text-[10px] font-medium text-gray-600">Log Out</span>
+                </button>
+              )}
+            </div>
+          )}
 
-        {/* Right: Erica avatar (detail pages) */}
-        {showEricaRight && (
-          <div className="relative flex-shrink-0">
-            <img src={imgErica} alt="Erica assistant" className="w-10 h-10 rounded-full object-cover" />
-            {ericaRightCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-[#002D72] text-white text-[8px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
-                {ericaRightCount}
-              </span>
-            )}
-          </div>
-        )}
+          {/* Erica with "Chat" label */}
+          {showChatRight && (
+            <button
+              type="button"
+              onClick={() => navigate('/erica-chat')}
+              className="flex flex-col items-center gap-0.5"
+            >
+              <img src={imgErica} alt="Chat" className="w-10 h-10 rounded-full object-cover" />
+              <span className="text-[10px] font-medium text-gray-600">Chat</span>
+            </button>
+          )}
 
-        {/* Right: cart button (TransactionDetailsPage) */}
-        {showCartRight && (
-          <button type="button" className="flex items-center justify-center w-8 h-8 flex-shrink-0">
-            <IconCart />
-          </button>
-        )}
+          {/* Erica avatar (detail pages) */}
+          {showEricaRight && (
+            <button
+              type="button"
+              onClick={() => navigate('/erica-chat')}
+              className="relative"
+            >
+              <img src={imgErica} alt="Erica assistant" className="w-10 h-10 rounded-full object-cover" />
+              {ericaRightCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-[#002D72] text-white text-[8px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                  {ericaRightCount}
+                </span>
+              )}
+            </button>
+          )}
 
-        {/* Right: cart + Erica (StatementsAndDocumentsPage) */}
-        {showCartAndErica && (
-          <div className="flex items-center gap-3 flex-shrink-0">
+          {/* Cart button (TransactionDetailsPage) */}
+          {showCartRight && (
             <button type="button" className="flex items-center justify-center w-8 h-8">
               <IconCart />
             </button>
-            <img src={imgErica} alt="Erica assistant" className="w-10 h-10 rounded-full object-cover" />
-          </div>
-        )}
+          )}
 
-        {/* Right: spacer (CommunicationsPage, MenuPage) */}
-        {showSpacer && (
-          <div className="w-8 h-8 flex-shrink-0" aria-hidden="true" />
-        )}
+          {/* Cart + Erica (StatementsAndDocumentsPage) */}
+          {showCartAndErica && (
+            <div className="flex items-center gap-3">
+              <button type="button" className="flex items-center justify-center w-8 h-8">
+                <IconCart />
+              </button>
+              <button type="button" onClick={() => navigate('/erica-chat')}>
+                <img src={imgErica} alt="Erica assistant" className="w-10 h-10 rounded-full object-cover" />
+              </button>
+            </div>
+          )}
 
+          {/* Spacer (CommunicationsPage, MenuPage) */}
+          {showSpacer && (
+            <div className="w-8 h-8" aria-hidden="true" />
+          )}
+
+        </div>
       </div>
 
       {/* Accounts / Dashboard sub-nav */}

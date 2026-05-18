@@ -1,10 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import LegalDisclosure from '../components/LegalDisclosure';
 import InsetDivider from '../components/InsetDivider';
 import AppHeader from '../components/AppHeader';
 import BottomNavigation from '../components/BottomNavigation';
 import EricaSearchBar from '../components/EricaSearchBar';
+import { useDashboardStore } from '../store/dashboardStore';
+import { dashboardService } from '../services/dashboardService';
+import { formatBalance, formatAmount, txStatusLabel, toDetailPayload } from '../utils/format';
 import imgPiggyBank from '../assets/images/piggybank.jpeg';
 import imgApplePay from '../assets/images/applepay-log.png';
 import imgPayPal   from '../assets/images/paypal-logo.png';
@@ -13,83 +16,7 @@ import imgLowes    from '../assets/images/logo-lowes.png';
 import imgUlta     from '../assets/images/logo-ulta.png';
 import imgGoal     from '../assets/images/goal-chart.jpeg';
 
-/* ─────────────────────────────────────────────
-   Static data
-───────────────────────────────────────────── */
-const transactions = [
-  {
-    status: 'Processing',
-    description: 'PMNT SENT 05/03\nCASH APP*SUTRINA\nCLARK OAKLAND CA',
-    amount: '-$100.00',
-    balance: '$664.89',
-    debit: true,
-    transactionDate: '05/03/2026',
-    type: 'Debit Card',
-    onlinePurchase: 'Y',
-    merchant: 'SQUARE CASH',
-    category: 'Cash, Checks & Misc:Other Expenses',
-  },
-  {
-    status: 'Processing',
-    description: 'WM SUPERCENTER\n#745 05/02\n#XXXXX0542462\nPURCHASE 5600 N\nHENRY BLVD\nSTOCKBRIDGE GA',
-    amount: '-$120.47',
-    balance: '$764.89',
-    debit: true,
-    transactionDate: '05/02/2026',
-    type: 'Debit Card',
-    onlinePurchase: 'N',
-    merchant: 'WALMART SUPERCENTER',
-    category: 'Groceries & Supermarkets',
-  },
-  {
-    status: 'Processing',
-    description: 'FOOD DEPOT STOC\n05/02\n#XXXXX0414096\nPURCHASE FOOD\nDEPOT STOC',
-    amount: '-$17.22',
-    balance: '$885.36',
-    debit: true,
-    transactionDate: '05/02/2026',
-    type: 'Debit Card',
-    onlinePurchase: 'N',
-    merchant: 'FOOD DEPOT',
-    category: 'Groceries & Supermarkets',
-  },
-  {
-    status: 'May 1, 2026',
-    description: 'Online Banking transfer\nto CHK 3580\nConfirmation#\nXXXXX27445',
-    amount: '-$200.00',
-    balance: '$1,357.90',
-    debit: true,
-    transactionDate: '05/01/2026',
-    type: 'ACH',
-    onlinePurchase: 'N',
-    merchant: 'BANK OF MOLTEN',
-    category: 'Transfers',
-  },
-  {
-    status: 'May 1, 2026',
-    description: 'AT&T SERVICES\nDES:PAYROLL\nID:260501JC5406\nINDN:JOSEPH S CLARK\nCO ID:XXXXX82655\nPPD',
-    amount: '$1,139.15',
-    balance: '$1,557.90',
-    debit: false,
-    transactionDate: '05/01/2026',
-    type: 'ACH',
-    onlinePurchase: 'N',
-    merchant: 'AT&T SERVICES',
-    category: 'Income',
-  },
-  {
-    status: 'Apr 29, 2026',
-    description: 'CASH APP*SUTRINA\nCLARK* 04/28 PMNT\nSENT Oakland CA',
-    amount: '-$50.00',
-    balance: '$418.75',
-    debit: true,
-    transactionDate: '04/28/2026',
-    type: 'Debit Card',
-    onlinePurchase: 'Y',
-    merchant: 'SQUARE CASH',
-    category: 'Cash, Checks & Misc:Other Expenses',
-  },
-];
+const MASK_DELAY_MS = 15000;
 
 const deals = [
   { logo: imgAdidas, name: 'Adidas',      cashback: '5% Cash Back' },
@@ -119,58 +46,56 @@ const IconInfo = () => (
 
 /* ─────────────────────────────────────────────
    Google Charts bar chart (Income vs Spending)
+   Accepts real income/spending from API data.
 ───────────────────────────────────────────── */
-function SpendingChart() {
-  const chartRef = useRef(null);
-  const drawn    = useRef(false);
+function SpendingChart({ income = 0, spending = 0 }) {
+  const chartRef  = useRef(null);
+  const chartInst = useRef(null);
+  const isReady   = useRef(false);
 
+  function draw(inc, sp) {
+    if (!isReady.current || !chartRef.current) return;
+    const data = window.google.visualization.arrayToDataTable([
+      ['Type', 'Amount', { role: 'style' }],
+      ['Income',   inc, '#9E9E9E'],
+      ['Spending', sp,  '#1a6bbf'],
+    ]);
+    const options = {
+      legend:          'none',
+      chartArea:       { width: '85%', height: '75%' },
+      backgroundColor: 'transparent',
+      bar:             { groupWidth: '55%' },
+      vAxis:           { gridlines: { color: 'transparent' }, textPosition: 'none', baselineColor: '#ccc' },
+      hAxis:           { textStyle: { color: '#6B7280', fontSize: 10 } },
+    };
+    if (!chartInst.current) {
+      chartInst.current = new window.google.visualization.ColumnChart(chartRef.current);
+    }
+    chartInst.current.draw(data, options);
+  }
+
+  // Load Google Charts once on mount
   useEffect(() => {
-    if (drawn.current) return;
-
-    function drawChart() {
-      if (!window.google || !window.google.visualization) return;
-      drawn.current = true;
-
-      const data = window.google.visualization.arrayToDataTable([
-        ['Type', 'Amount', { role: 'style' }],
-        ['Income',   1139.15, '#9E9E9E'],
-        ['Spending',  357.69, '#1a6bbf'],
-      ]);
-
-      const options = {
-        legend:      'none',
-        chartArea:   { width: '85%', height: '75%' },
-        backgroundColor: 'transparent',
-        bar:         { groupWidth: '55%' },
-        vAxis:       { gridlines: { color: 'transparent' }, textPosition: 'none', baselineColor: '#ccc' },
-        hAxis:       { textStyle: { color: '#6B7280', fontSize: 10 }, ticks: [{ v: 0, f: 'Income' }, { v: 1, f: 'Spending' }] },
-      };
-
-      const chart = new window.google.visualization.ColumnChart(chartRef.current);
-      chart.draw(data, options);
+    function onReady() { isReady.current = true; draw(income, spending); }
+    function loadAndDraw() {
+      window.google.charts.load('current', { packages: ['corechart'] });
+      window.google.charts.setOnLoadCallback(onReady);
     }
+    if (window.google?.visualization) { onReady(); return; }
+    if (window.google?.charts)        { loadAndDraw(); return; }
+    const existing = document.getElementById('google-charts-script');
+    if (existing) { existing.addEventListener('load', loadAndDraw); return; }
+    const script  = document.createElement('script');
+    script.id     = 'google-charts-script';
+    script.src    = 'https://www.gstatic.com/charts/loader.js';
+    script.onload = loadAndDraw;
+    document.head.appendChild(script);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-    if (window.google && window.google.charts) {
-      window.google.charts.setOnLoadCallback(drawChart);
-    } else {
-      const existing = document.getElementById('google-charts-script');
-      if (existing) {
-        existing.addEventListener('load', () => {
-          window.google.charts.load('current', { packages: ['corechart'] });
-          window.google.charts.setOnLoadCallback(drawChart);
-        });
-        return;
-      }
-      const script  = document.createElement('script');
-      script.id     = 'google-charts-script';
-      script.src    = 'https://www.gstatic.com/charts/loader.js';
-      script.onload = () => {
-        window.google.charts.load('current', { packages: ['corechart'] });
-        window.google.charts.setOnLoadCallback(drawChart);
-      };
-      document.head.appendChild(script);
-    }
-  }, []);
+  // Redraw whenever income or spending changes
+  useEffect(() => {
+    draw(income, spending);
+  }, [income, spending]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div ref={chartRef} style={{ width: '160px', height: '120px' }} aria-label="Income vs Spending bar chart" />
@@ -182,9 +107,97 @@ function SpendingChart() {
 ───────────────────────────────────────────── */
 function AccountDetailsPage() {
   const navigate = useNavigate();
+  const { state } = useLocation();
 
-  const [routingOpen,  setRoutingOpen]  = useState(false);
-  const [statusOpen,   setStatusOpen]   = useState(false);
+  const [routingOpen,    setRoutingOpen]    = useState(false);
+  const [statusOpen,     setStatusOpen]     = useState(false);
+  const [accountTxs,     setAccountTxs]     = useState([]);
+  const [loadingTxs,     setLoadingTxs]     = useState(false);
+
+  // Account number reveal
+  const [showAcctNum,    setShowAcctNum]    = useState(false);
+  const [fullAcctNum,    setFullAcctNum]    = useState(null);
+  const [loadingAcctNum, setLoadingAcctNum] = useState(false);
+  const maskTimerRef = useRef(null);
+
+  // Routing number copy feedback
+  const [copied, setCopied] = useState(false);
+
+  // Account comes from Dashboard navigation state; fall back to primary store account
+  const { accounts, loadingAccounts, fetchAccounts } = useDashboardStore();
+  const routeAccount  = state?.account || null;
+  const storeAccount  = accounts.find((a) => a.isPrimary) || accounts[0] || null;
+  const account       = routeAccount || storeAccount;
+
+  // Fetch store accounts only when arriving directly (no route state)
+  useEffect(() => {
+    if (!routeAccount) fetchAccounts();
+  }, [routeAccount, fetchAccounts]);
+
+  // Fetch transactions filtered to this account whenever the account ID is known
+  useEffect(() => {
+    if (!account?.id) return;
+    setLoadingTxs(true);
+    setAccountTxs([]);
+    dashboardService
+      .getTransactions({ accountId: account.id, limit: 20 })
+      .then((res) => setAccountTxs(res?.data || []))
+      .catch(() => setAccountTxs([]))
+      .finally(() => setLoadingTxs(false));
+  }, [account?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Cleanup auto-mask timer on unmount
+  useEffect(() => () => { if (maskTimerRef.current) clearTimeout(maskTimerRef.current); }, []);
+
+  const startMaskTimer = () => {
+    if (maskTimerRef.current) clearTimeout(maskTimerRef.current);
+    maskTimerRef.current = setTimeout(() => setShowAcctNum(false), MASK_DELAY_MS);
+  };
+
+  const handleAccountNumberClick = async () => {
+    if (!account?.id) return;
+    if (showAcctNum) {
+      setShowAcctNum(false);
+      if (maskTimerRef.current) clearTimeout(maskTimerRef.current);
+      return;
+    }
+    if (fullAcctNum) {
+      setShowAcctNum(true);
+      startMaskTimer();
+      return;
+    }
+    setLoadingAcctNum(true);
+    try {
+      const res = await dashboardService.getAccountNumber(account.id);
+      setFullAcctNum(res.data.accountNumber);
+      setShowAcctNum(true);
+      startMaskTimer();
+    } catch {
+      // silently keep masked
+    } finally {
+      setLoadingAcctNum(false);
+    }
+  };
+
+  const handleRoutingCopy = () => {
+    const num = account?.routingNumber;
+    if (!num) return;
+    navigator.clipboard.writeText(num).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }).catch(() => {});
+  };
+
+  // Compute this month's income and spending from real transactions
+  const now = new Date();
+  const thisMonthTxs = accountTxs.filter((tx) => {
+    const d = new Date(tx.transactionDate);
+    return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+  });
+  const monthlyIncome   = thisMonthTxs.filter((tx) => tx.type === 'credit').reduce((s, tx) => s + tx.amount, 0);
+  const monthlySpending = thisMonthTxs.filter((tx) => tx.type === 'debit').reduce((s, tx) => s + tx.amount, 0);
+  const spendingDiff    = Math.abs(monthlyIncome - monthlySpending);
+  const isSaving        = monthlyIncome >= monthlySpending;
 
   return (
     <div className="flex flex-col h-screen bg-gray-100 font-sans">
@@ -208,11 +221,19 @@ function AccountDetailsPage() {
         {/* ── Account overview ── */}
         <section className="px-4 pt-6 pb-4">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl font-extrabold text-gray-900 tracking-wide">JOINT</h2>
+            <h2 className="text-2xl font-extrabold text-gray-900 tracking-wide">
+              {!account && loadingAccounts
+                ? <span className="text-gray-200 animate-pulse">——</span>
+                : account?.accountName?.toUpperCase() ?? '——'}
+            </h2>
             <button type="button" className="text-[#1a6bbf] font-bold text-base tracking-wide">EDIT</button>
           </div>
           <div className="flex flex-col items-center">
-            <p className="text-5xl font-bold text-gray-900 mb-2">$664.89</p>
+            <p className="text-5xl font-bold text-gray-900 mb-2">
+              {!account && loadingAccounts
+                ? <span className="text-gray-200 animate-pulse">$——.——</span>
+                : formatBalance(account?.availableBalance)}
+            </p>
             <div className="flex items-center gap-2">
               <span className="text-gray-500 text-sm font-normal">Available balance</span>
               <IconInfo />
@@ -234,15 +255,49 @@ function AccountDetailsPage() {
             <>
               <InsetDivider color={100} />
               <div className="px-5 pb-4">
-                <div className="pt-4 space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-sm text-gray-500">Account number</span>
-                    <span className="text-sm font-medium text-gray-900">••••••7890</span>
+                <div className="pt-4 space-y-3">
+
+                  {/* Account number row — tap to reveal/hide */}
+                  <div className="flex items-center justify-between">
+                    <button
+                      type="button"
+                      onClick={handleAccountNumberClick}
+                      className="flex items-center gap-2 text-left"
+                      disabled={loadingAcctNum}
+                    >
+                      <span className="text-sm text-gray-500">Account number</span>
+                      <span className="text-xs font-semibold text-[#1a6bbf]">
+                        {loadingAcctNum ? '…' : showAcctNum ? 'Hide' : 'Show'}
+                      </span>
+                    </button>
+                    <span className="text-sm font-medium text-gray-900 font-mono tracking-wider">
+                      {loadingAcctNum
+                        ? '…'
+                        : showAcctNum && fullAcctNum
+                          ? fullAcctNum
+                          : account?.maskedAccountNumber ?? '••••••••••'}
+                    </span>
                   </div>
-                  <div className="flex justify-between">
+
+                  <InsetDivider color={100} />
+
+                  {/* Routing number row — tap to copy */}
+                  <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-500">Routing number</span>
-                    <span className="text-sm font-medium text-gray-900">026009593</span>
+                    <button
+                      type="button"
+                      onClick={handleRoutingCopy}
+                      className="flex items-center gap-2"
+                    >
+                      <span className="text-sm font-medium text-gray-900">
+                        {account?.routingNumber ?? '—'}
+                      </span>
+                      <span className={`text-xs font-semibold transition-colors ${copied ? 'text-green-600' : 'text-[#1a6bbf]'}`}>
+                        {copied ? 'Copied' : 'Copy'}
+                      </span>
+                    </button>
                   </div>
+
                 </div>
               </div>
             </>
@@ -273,27 +328,44 @@ function AccountDetailsPage() {
               Recent Transactions
             </p>
             <div className="space-y-0">
-              {transactions.map((tx, i) => (
-                <div key={i}>
-                  <button
-                    type="button"
-                    onClick={() => navigate('/transaction-details', { state: { transaction: tx } })}
-                    className="w-full flex items-start justify-between py-3 text-left active:bg-gray-50"
-                  >
-                    <div className="flex-1 pr-4">
-                      <p className="text-gray-500 text-xs font-normal mb-0.5">{tx.status}</p>
-                      <p className="text-gray-900 text-sm font-bold leading-snug whitespace-pre-line">
-                        {tx.description}
-                      </p>
-                    </div>
-                    <div className="text-right flex-shrink-0">
-                      <p className="text-sm font-bold text-[#1a6bbf]">{tx.amount}</p>
-                      <p className="text-gray-500 text-xs font-normal">{tx.balance}</p>
-                    </div>
-                  </button>
-                  {i < transactions.length - 1 && <InsetDivider color={100} />}
-                </div>
-              ))}
+              {loadingTxs ? (
+                [1, 2, 3].map((n) => (
+                  <div key={n} className="py-3 animate-pulse">
+                    <div className="h-2.5 bg-gray-100 rounded w-20 mb-2" />
+                    <div className="h-3.5 bg-gray-100 rounded w-48" />
+                  </div>
+                ))
+              ) : accountTxs.length === 0 ? (
+                <p className="text-gray-400 text-sm py-4 text-center">No recent transactions.</p>
+              ) : (
+                accountTxs.map((tx, i) => (
+                  <div key={tx.id || i}>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        navigate('/transaction-details', { state: { transaction: toDetailPayload(tx) } })
+                      }
+                      className="w-full flex items-start justify-between py-3 text-left active:bg-gray-50"
+                    >
+                      <div className="flex-1 pr-4">
+                        <p className="text-gray-500 text-xs font-normal mb-0.5">
+                          {txStatusLabel(tx)}
+                        </p>
+                        <p className="text-gray-900 text-sm font-bold leading-snug">
+                          {tx.description}
+                        </p>
+                      </div>
+                      <div className="text-right flex-shrink-0">
+                        <p className="text-sm font-bold text-[#1a6bbf]">{formatAmount(tx)}</p>
+                        <p className="text-gray-500 text-xs font-normal">
+                          {formatBalance(tx.balanceAfter)}
+                        </p>
+                      </div>
+                    </button>
+                    {i < accountTxs.length - 1 && <InsetDivider color={100} />}
+                  </div>
+                ))
+              )}
             </div>
           </div>
           <InsetDivider color={100} />
@@ -310,13 +382,25 @@ function AccountDetailsPage() {
             </p>
             <div className="flex items-start gap-4">
               <div className="flex flex-col items-center flex-shrink-0">
-                <SpendingChart />
+                <SpendingChart income={monthlyIncome} spending={monthlySpending} />
                 <p className="text-gray-500 text-[10px] font-normal -mt-1">Income / Spending</p>
               </div>
               <p className="text-gray-700 text-sm leading-relaxed">
-                Nice work! On average, you spend{' '}
-                <span className="text-[#1a6bbf] font-bold">$782 less</span>{' '}
-                than you deposit each month. Setting a budget can help you stay on track.
+                {monthlyIncome === 0 && monthlySpending === 0 ? (
+                  'No activity recorded this month yet.'
+                ) : isSaving ? (
+                  <>
+                    Nice work! This month you&apos;ve deposited{' '}
+                    <span className="text-[#1a6bbf] font-bold">{formatBalance(spendingDiff)} more</span>{' '}
+                    than you&apos;ve spent. Setting a budget can help you stay on track.
+                  </>
+                ) : (
+                  <>
+                    This month you&apos;ve spent{' '}
+                    <span className="text-red-500 font-bold">{formatBalance(spendingDiff)} more</span>{' '}
+                    than you&apos;ve deposited. Consider reviewing your expenses.
+                  </>
+                )}
               </p>
             </div>
           </div>

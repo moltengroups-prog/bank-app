@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import LegalDisclosure from '../components/LegalDisclosure';
 import InsetDivider from '../components/InsetDivider';
@@ -7,6 +7,8 @@ import BottomNavigation from '../components/BottomNavigation';
 import EricaSearchBar from '../components/EricaSearchBar';
 import ActivityDetailsPage from './ActivityDetailsPage';
 import BillPayEnrollModal from '../components/BillPayEnrollModal';
+import { dashboardService } from '../services/dashboardService';
+import { toActivityDetailPayload } from '../utils/format';
 
 import imgTransfer from '../assets/images/transfer-icon.png';
 import imgZelle    from '../assets/images/zelle-logo.png';
@@ -14,31 +16,22 @@ import imgPayBills from '../assets/images/pay-bills-icon.png';
 import imgWire     from '../assets/images/wire-transfer-icon.png';
 import imgBoaMini  from '../assets/images/boa-mini-logo.png';
 
-const transactions = [
-  {
-    name: 'Adv SafeBalance Banking - 3580',
-    date: 'May 08, 2026',
-    amount: '$140.00',
-    status: 'Completed',
-    to: 'Adv SafeBalance Banking - 3580',
-    from: 'joint - 3083',
-    confirmationNumber: '4328636251',
-  },
-  {
-    name: 'joint - 3083',
-    date: 'May 03, 2026',
-    amount: '$100.00',
-    status: 'Completed',
-    to: 'joint - 3083',
-    from: 'Adv SafeBalance Banking - 3580',
-    confirmationNumber: '4328636252',
-  },
-];
-
 function PayAndTransferPage() {
   const navigate = useNavigate();
   const [selectedTx, setSelectedTx] = useState(null);
   const [billPayOpen, setBillPayOpen] = useState(false);
+
+  const [txs, setTxs]             = useState([]);
+  const [loadingTxs, setLoadingTxs] = useState(false);
+
+  useEffect(() => {
+    setLoadingTxs(true);
+    dashboardService
+      .getTransactions({ limit: 10 })
+      .then((res) => setTxs(res?.data || []))
+      .catch(() => setTxs([]))
+      .finally(() => setLoadingTxs(false));
+  }, []);
 
   return (
     <div className="flex flex-col h-screen bg-gray-100 font-sans">
@@ -121,28 +114,45 @@ function PayAndTransferPage() {
             <p className="text-[11px] font-semibold text-gray-400 tracking-widest uppercase">History</p>
           </div>
 
-          {transactions.map((tx, i) => (
-            <React.Fragment key={i}>
-              <button
-                type="button"
-                onClick={() => setSelectedTx(tx)}
-                className="w-full flex items-center justify-between px-5 py-4 text-left active:bg-gray-50"
-              >
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 overflow-hidden border border-gray-200">
-                    <img src={imgBoaMini} alt="Bank of Molten" className="w-8 h-8 object-contain" />
-                  </div>
-                  <p className="text-gray-900 font-medium text-sm leading-snug">{tx.name}</p>
+          {loadingTxs ? (
+            [1, 2].map((n) => (
+              <div key={n} className="flex items-center gap-3 px-5 py-4 animate-pulse">
+                <div className="w-12 h-12 rounded-full bg-gray-100 flex-shrink-0" />
+                <div className="flex-1">
+                  <div className="h-3 bg-gray-100 rounded w-36 mb-2" />
+                  <div className="h-2.5 bg-gray-100 rounded w-24" />
                 </div>
-                <div className="text-right flex-shrink-0 ml-4">
-                  <p className="text-gray-500 text-xs mb-0.5">{tx.date}</p>
-                  <p className="text-[#1a6bbf] font-bold text-base">{tx.amount}</p>
-                  <p className="text-gray-400 text-xs">Completed</p>
-                </div>
-              </button>
-              <InsetDivider color={100} />
-            </React.Fragment>
-          ))}
+              </div>
+            ))
+          ) : txs.length === 0 ? (
+            <p className="px-5 py-4 text-gray-400 text-sm">No recent activity.</p>
+          ) : (
+            txs.map((tx, i) => {
+              const mapped = toActivityDetailPayload(tx);
+              return (
+                <React.Fragment key={tx.id || i}>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedTx(mapped)}
+                    className="w-full flex items-center justify-between px-5 py-4 text-left active:bg-gray-50"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 overflow-hidden border border-gray-200">
+                        <img src={imgBoaMini} alt="Bank of Molten" className="w-8 h-8 object-contain" />
+                      </div>
+                      <p className="text-gray-900 font-medium text-sm leading-snug truncate">{mapped.name}</p>
+                    </div>
+                    <div className="text-right flex-shrink-0 ml-4">
+                      <p className="text-gray-500 text-xs mb-0.5">{mapped.date}</p>
+                      <p className="text-[#1a6bbf] font-bold text-base">{mapped.amount}</p>
+                      <p className="text-gray-400 text-xs">{mapped.status}</p>
+                    </div>
+                  </button>
+                  <InsetDivider color={100} />
+                </React.Fragment>
+              );
+            })
+          )}
 
           {/* More Activity */}
           <div className="py-4 flex justify-center">

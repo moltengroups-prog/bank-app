@@ -1,0 +1,15 @@
+{
+  "watch": ["."],
+  "ext": "js,json",
+  "ignore": [
+    "node_modules/**",
+    "database/**",
+    "*.test.js",
+    "*.spec.js"
+  ],
+  "delay": 500,
+  "signal": "SIGTERM",
+  "env": {
+    "NODE_ENV": "development"
+  }
+}

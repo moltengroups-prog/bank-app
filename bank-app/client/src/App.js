@@ -1,4 +1,8 @@
 import { Routes, Route } from 'react-router-dom';
+import { useEffect } from 'react';
+import 'flag-icons/css/flag-icons.min.css';
+import { connectSocket, getSocket } from './socket/socket.js';
+import { useNotificationStore } from './store/notificationStore';
 import SignInPage from './pages/SignInPage';
 import DashboardPage from './pages/DashboardPage';
 import MainDashboardPage from './pages/MainDashboardPage';
@@ -21,9 +25,53 @@ import BillPayPayeeDetailsPage from './pages/BillPayPayeeDetailsPage';
 import WireTransferPage from './pages/WireTransferPage';
 import WireStartPage from './pages/WireStartPage';
 import WireAddRecipientPage from './pages/WireAddRecipientPage';
+import WireAddRecipientDetailsPage from './pages/WireAddRecipientDetailsPage';
+import WireAddRecipientBankDetailsPage from './pages/WireAddRecipientBankDetailsPage';
+import WireAddRecipientReviewPage from './pages/WireAddRecipientReviewPage';
+import WireAddRecipientConfirmPage from './pages/WireAddRecipientConfirmPage';
+import WireAccountSelectPage from './pages/WireAccountSelectPage';
+import WireRecipientSummaryPage from './pages/WireRecipientSummaryPage';
+import WireAmountPage from './pages/WireAmountPage';
+import WireReviewPage from './pages/WireReviewPage';
+import WireSuccessPage from './pages/WireSuccessPage';
+import ProductsOffersPage from './pages/ProductsOffersPage';
+import EricaChatPage from './pages/EricaChatPage';
+import LiveChatPage from './pages/LiveChatPage';
 import './App.css';
 
 function App() {
+  const { subscribeToSocket } = useNotificationStore();
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    const socket = connectSocket();
+    if (!socket) return;
+
+    let unsubscribe;
+
+    const doSubscribe = () => {
+      // Idempotent: if already subscribed from a previous call, skip
+      if (unsubscribe) return;
+      unsubscribe = subscribeToSocket(getSocket());
+    };
+
+    if (socket.connected) {
+      doSubscribe();
+    } else {
+      socket.once('connect', doSubscribe);
+    }
+
+    return () => {
+      // Remove the pending once-handler so StrictMode's unmount→remount
+      // cycle doesn't leave a stale listener that fires on the next connect.
+      socket.off('connect', doSubscribe);
+      unsubscribe?.();
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <Routes>
       <Route path="/" element={<SignInPage />} />
@@ -48,6 +96,18 @@ function App() {
       <Route path="/wire-transfer" element={<WireTransferPage />} />
       <Route path="/wire-transfer/start" element={<WireStartPage />} />
       <Route path="/wire-transfer/add-recipient" element={<WireAddRecipientPage />} />
+      <Route path="/wire-transfer/add-recipient/details" element={<WireAddRecipientDetailsPage />} />
+      <Route path="/wire-transfer/add-recipient/bank-details" element={<WireAddRecipientBankDetailsPage />} />
+      <Route path="/wire-transfer/add-recipient/review" element={<WireAddRecipientReviewPage />} />
+      <Route path="/wire-transfer/add-recipient/confirm" element={<WireAddRecipientConfirmPage />} />
+      <Route path="/wire-transfer/recipient-summary" element={<WireRecipientSummaryPage />} />
+      <Route path="/wire-transfer/account-select" element={<WireAccountSelectPage />} />
+      <Route path="/wire-transfer/amount" element={<WireAmountPage />} />
+      <Route path="/wire-transfer/review" element={<WireReviewPage />} />
+      <Route path="/wire-transfer/success" element={<WireSuccessPage />} />
+      <Route path="/products-offers" element={<ProductsOffersPage />} />
+      <Route path="/erica-chat" element={<EricaChatPage />} />
+      <Route path="/live-chat" element={<LiveChatPage />} />
     </Routes>
   );
 }
