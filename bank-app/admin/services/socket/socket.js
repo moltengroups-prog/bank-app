@@ -1,7 +1,8 @@
 'use client';
 
-// Admin socket — connects directly to backend (Next.js rewrites don't handle WS)
-const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:8000';
+// Admin socket connects directly to the Railway backend.
+// Next.js cannot proxy WebSocket connections through its rewrite rules.
+import { SOCKET_URL } from '../../lib/env';
 
 let socket = null;
 
@@ -24,12 +25,12 @@ export async function connectAdminSocket() {
   const { io } = await import('socket.io-client');
 
   socket = io(SOCKET_URL, {
-    auth:                { token },
-    reconnection:        true,
+    auth:                 { token },
+    reconnection:         true,
     reconnectionAttempts: 10,
-    reconnectionDelay:   1000,
+    reconnectionDelay:    1000,
     reconnectionDelayMax: 5000,
-    transports:          ['websocket', 'polling'],
+    transports:           ['websocket', 'polling'],
   });
 
   socket.on('connect', () => {

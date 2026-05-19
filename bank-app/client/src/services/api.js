@@ -1,4 +1,4 @@
-const BASE_URL = process.env.REACT_APP_API_URL || '/api';
+import { API_URL } from '../config/env';
 
 async function apiFetch(path, options = {}) {
   const token = localStorage.getItem('token');
@@ -11,7 +11,7 @@ async function apiFetch(path, options = {}) {
 
   let res;
   try {
-    res = await fetch(`${BASE_URL}${path}`, { ...options, headers });
+    res = await fetch(`${API_URL}${path}`, { ...options, headers });
   } catch {
     throw new Error('Unable to connect to server. Check that the backend is running.');
   }
@@ -24,7 +24,6 @@ async function apiFetch(path, options = {}) {
 
   const contentType = res.headers.get('content-type') || '';
 
-  // If the server returned JSON, parse it regardless of status
   if (contentType.includes('application/json')) {
     const data = await res.json();
     if (!res.ok) {
@@ -36,7 +35,6 @@ async function apiFetch(path, options = {}) {
     return data;
   }
 
-  // Non-JSON response — build a descriptive message
   if (res.status === 404) {
     throw new Error(`API route not found: ${options.method || 'GET'} ${path}`);
   }

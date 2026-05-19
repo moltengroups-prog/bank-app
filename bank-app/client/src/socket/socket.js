@@ -1,6 +1,5 @@
 import { io } from 'socket.io-client';
-
-const SOCKET_URL = process.env.REACT_APP_SOCKET_URL || 'http://localhost:8000';
+import { SOCKET_URL } from '../config/env';
 
 let socket = null;
 
@@ -19,12 +18,12 @@ export function connectSocket() {
   if (!token) return null;
 
   socket = io(SOCKET_URL, {
-    auth:                { token },
-    reconnection:        true,
+    auth:                 { token },
+    reconnection:         true,
     reconnectionAttempts: 10,
-    reconnectionDelay:   1000,
+    reconnectionDelay:    1000,
     reconnectionDelayMax: 5000,
-    transports:          ['websocket', 'polling'],
+    transports:           ['websocket', 'polling'],
   });
 
   socket.on('connect', () => {

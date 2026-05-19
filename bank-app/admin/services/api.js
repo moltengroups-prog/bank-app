@@ -1,4 +1,4 @@
-const BASE = '/api';
+import { API_URL } from '../lib/env';
 
 async function apiFetch(path, options = {}) {
   const token =
@@ -12,7 +12,7 @@ async function apiFetch(path, options = {}) {
 
   let res;
   try {
-    res = await fetch(`${BASE}${path}`, { ...options, headers });
+    res = await fetch(`${API_URL}${path}`, { ...options, headers });
   } catch {
     throw new Error('Unable to connect to server. Is the backend running?');
   }
@@ -27,9 +27,6 @@ async function apiFetch(path, options = {}) {
   const data = await res.json();
 
   if (res.status === 401) {
-    // Clear any stale credentials — but do NOT force a page reload.
-    // For login attempts this IS the error (wrong password).
-    // For protected endpoints the admin layout will redirect on next render.
     if (typeof window !== 'undefined') {
       localStorage.removeItem('adminToken');
       localStorage.removeItem('adminUser');

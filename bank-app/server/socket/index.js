@@ -3,6 +3,7 @@ import { socketAuth } from './middleware/socketAuth.js';
 import { registerSupportHandlers } from './handlers/supportHandlers.js';
 import { registerNotificationHandlers } from './handlers/notificationHandlers.js';
 import { registerAdminHandlers } from './handlers/adminHandlers.js';
+import { ALLOWED_ORIGINS } from '../config/origins.js';
 
 let io = null;
 
@@ -14,11 +15,8 @@ export function initSocket(httpServer) {
 
   io = new Server(httpServer, {
     cors: {
-      origin: [
-        process.env.CLIENT_ORIGIN || 'http://localhost:3000',
-        process.env.ADMIN_ORIGIN  || 'http://localhost:3001',
-      ],
-      methods: ['GET', 'POST'],
+      origin:      ALLOWED_ORIGINS,
+      methods:     ['GET', 'POST'],
       credentials: true,
     },
     transports: ['websocket', 'polling'],

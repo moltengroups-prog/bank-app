@@ -7,12 +7,14 @@ import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
 
 import connectDB, { disconnectDB } from './config/db.js';
+import { ALLOWED_ORIGINS } from './config/origins.js';
 import apiRouter from './routes/index.js';
 import { errorHandler } from './middleware/error.js';
 import { initSocket } from './socket/index.js';
 
 const app  = express();
 const PORT = Number(process.env.PORT) || 8000;
+
 
 // ── Database ──────────────────────────────────────────────────────
 // connectDB() is async but we intentionally don't await here — the
@@ -26,7 +28,11 @@ connectDB().catch((err) => {
 // ── Security middleware ───────────────────────────────────────────
 app.use(helmet());
 app.use(cors({
-  origin:      process.env.CLIENT_ORIGIN || 'http://localhost:3000',
+  origin: (origin, cb) => {
+    // Allow server-to-server requests (no Origin header) and whitelisted domains
+    if (!origin || ALLOWED_ORIGINS.includes(origin)) return cb(null, true);
+    cb(new Error(`CORS: origin ${origin} not allowed`));
+  },
   credentials: true,
 }));
 
@@ -61,12 +67,15 @@ initSocket(httpServer);
 
 // ── Start ─────────────────────────────────────────────────────────
 httpServer.listen(PORT, () => {
-  const line = '─'.repeat(50);
+  const line    = '─'.repeat(50);
+  const base    = process.env.NODE_ENV === 'production'
+    ? `(Railway — port ${PORT})`
+    : `http://localhost:${PORT}`;
   console.log(`\n  ${line}`);
-  console.log(`  Server   → http://localhost:${PORT}`);
-  console.log(`  Socket   → ws://localhost:${PORT}`);
-  console.log(`  Health   → http://localhost:${PORT}/api/health`);
+  console.log(`  Server   → ${base}`);
+  console.log(`  Health   → ${base}/api/health`.replace('(Railway — port', 'http://localhost:'));
   console.log(`  Mode     → ${process.env.NODE_ENV || 'development'}`);
+  console.log(`  Origins  → ${ALLOWED_ORIGINS.join(', ')}`);
   console.log(`  PID      → ${process.pid}`);
   console.log(`  ${line}\n`);
 });
