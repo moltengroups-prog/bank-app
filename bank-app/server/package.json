@@ -9,7 +9,10 @@
     "kill": "lsof -ti:8000 | xargs kill -9 2>/dev/null; echo 'Port 8000 cleared'",
     "restart": "npm run kill && npm run dev",
     "seed": "node database/seedDemoData.js",
-    "demo": "node database/generateDemoUser.js"
+    "demo": "node database/generateDemoUser.js",
+    "test": "NODE_OPTIONS=--experimental-vm-modules NODE_ENV=test jest",
+    "test:watch": "NODE_OPTIONS=--experimental-vm-modules NODE_ENV=test jest --watch",
+    "test:coverage": "NODE_OPTIONS=--experimental-vm-modules NODE_ENV=test jest --coverage"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
@@ -17,13 +20,20 @@
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
+    "express-rate-limit": "^8.5.2",
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.6.2",
     "morgan": "^1.10.1",
+    "node-cron": "^4.2.1",
+    "pdfkit": "^0.18.0",
     "socket.io": "^4.8.3"
   },
   "devDependencies": {
-    "nodemon": "^3.1.14"
+    "@jest/globals": "^30.4.1",
+    "jest": "^30.4.2",
+    "mongodb-memory-server": "^11.1.0",
+    "nodemon": "^3.1.14",
+    "supertest": "^7.2.2"
   }
 }

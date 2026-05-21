@@ -2,17 +2,28 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
 import LegalDisclosure from '../components/LegalDisclosure';
+import { api } from '../services/api';
 
 function CompanyPayeePage() {
   const navigate = useNavigate();
-  const [query, setQuery] = useState('');
+  const [query,   setQuery]   = useState('');
+  const [saving,  setSaving]  = useState(false);
+  const [error,   setError]   = useState('');
 
   const canSearch = query.trim().length > 0;
 
-  const handleSearch = () => {
-    if (!canSearch) return;
-    // future: navigate('/company-payee-results', { state: { query } })
-    console.log('Searching for company:', query);
+  const handleSearch = async () => {
+    if (!canSearch || saving) return;
+    setSaving(true);
+    setError('');
+    try {
+      await api.post('/bill-pay/payees', { name: query.trim(), category: 'other' });
+      navigate('/bill-pay');
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -27,6 +38,8 @@ function CompanyPayeePage() {
         <p className="px-4 pt-5 pb-5 text-base font-bold text-gray-800 leading-snug">
           Enter a company name to search our list of major businesses.
         </p>
+
+        {error && <p className="px-4 pb-3 text-sm text-red-500">{error}</p>}
 
         {/* Search input */}
         <div className="px-4 pb-6">
@@ -56,12 +69,12 @@ function CompanyPayeePage() {
           <button
             type="button"
             onClick={handleSearch}
-            disabled={!canSearch}
+            disabled={!canSearch || saving}
             className={`flex-1 py-4 font-bold text-sm tracking-widest rounded-full text-white transition-opacity ${
-              canSearch ? 'bg-[#4A6FA5] active:opacity-80' : 'bg-[#4A6FA5] opacity-50'
+              canSearch && !saving ? 'bg-[#4A6FA5] active:opacity-80' : 'bg-[#4A6FA5] opacity-50'
             }`}
           >
-            SEARCH
+            {saving ? 'SAVING…' : 'SEARCH'}
           </button>
         </div>
       </div>

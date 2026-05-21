@@ -1,65 +1,31 @@
 import 'dotenv/config';
 import { createServer } from 'http';
-import express from 'express';
-import cors from 'cors';
-import helmet from 'helmet';
 import morgan from 'morgan';
-import cookieParser from 'cookie-parser';
 
 import connectDB, { disconnectDB } from './config/db.js';
 import { ALLOWED_ORIGINS } from './config/origins.js';
-import apiRouter from './routes/index.js';
-import { errorHandler } from './middleware/error.js';
 import { initSocket } from './socket/index.js';
+import { startScheduler } from './services/schedulerService.js';
+import { createApp } from './app.js';
 
-const app  = express();
+const app  = createApp();
 const PORT = Number(process.env.PORT) || 8000;
 
+// ── HTTP logging (must be added before createServer) ──────────────
+if (process.env.NODE_ENV !== 'production') {
+  app.use(morgan('dev'));
+}
 
 // ── Database ──────────────────────────────────────────────────────
 // connectDB() is async but we intentionally don't await here — the
 // server starts accepting HTTP immediately, and requireDB middleware
 // returns 503 until the connection is established. This avoids
 // blocking the HTTP bind on a slow Atlas handshake.
-connectDB().catch((err) => {
-  console.error('  [boot] connectDB error:', err.message);
-});
-
-// ── Security middleware ───────────────────────────────────────────
-app.use(helmet());
-app.use(cors({
-  origin: (origin, cb) => {
-    // Allow server-to-server requests (no Origin header) and whitelisted domains
-    if (!origin || ALLOWED_ORIGINS.includes(origin)) return cb(null, true);
-    cb(new Error(`CORS: origin ${origin} not allowed`));
-  },
-  credentials: true,
-}));
-
-// ── Request parsing ───────────────────────────────────────────────
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser());
-
-// ── HTTP logging ──────────────────────────────────────────────────
-if (process.env.NODE_ENV !== 'production') {
-  app.use(morgan('dev'));
-}
-
-// ── API routes ────────────────────────────────────────────────────
-app.use('/api', apiRouter);
-
-// ── 404 catch-all — must come after all routes ────────────────────
-// Returns JSON so the frontend never receives an HTML error page.
-app.use((req, res) => {
-  res.status(404).json({
-    success: false,
-    message: `Route not found: ${req.method} ${req.originalUrl}`,
+connectDB()
+  .then(() => startScheduler())
+  .catch((err) => {
+    console.error('  [boot] connectDB error:', err.message);
   });
-});
-
-// ── Centralized error handler (must be last) ──────────────────────
-app.use(errorHandler);
 
 // ── HTTP server + Socket.IO ───────────────────────────────────────
 const httpServer = createServer(app);

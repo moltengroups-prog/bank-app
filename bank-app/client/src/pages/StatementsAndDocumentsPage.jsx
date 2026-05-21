@@ -4,45 +4,7 @@ import AppHeader from '../components/AppHeader';
 import LegalDisclosure from '../components/LegalDisclosure';
 import InsetDivider from '../components/InsetDivider';
 import imgPaperless from '../assets/images/paperless-settings-icon.png';
-
-// ── Mock data (replace with API calls) ──────────────────────────
-const ACCOUNTS = [
-  { id: 'all',      label: 'All Accounts' },
-  { id: 'joint',    label: 'joint' },
-  { id: 'adv-3580', label: 'Adv SafeBalance Banking - 3580' },
-];
-
-const YEARS = [2026, 2025, 2024, 2023, 2022, 2021, 2020, 2019];
-
-const ALL_STATEMENTS = [
-  {
-    id: 1,
-    title: 'April Statement',
-    account: 'Adv SafeB... - 3580',
-    accountId: 'adv-3580',
-    date: 'Apr 23, 2026',
-    year: 2026,
-    borderColor: '#1a6bbf',
-  },
-  {
-    id: 2,
-    title: 'April Statement',
-    account: 'joint',
-    accountId: 'joint',
-    date: 'Apr 22, 2026',
-    year: 2026,
-    borderColor: '#1a6bbf',
-  },
-  {
-    id: 3,
-    title: 'Hold/freeze $7300.00',
-    account: 'Adv SafeB... - 3580',
-    accountId: 'adv-3580',
-    date: 'Apr 20, 2026',
-    year: 2026,
-    borderColor: '#F59E0B',
-  },
-];
+import { accountService } from '../services/accountService';
 
 const ACCORDION_SECTIONS = [
   { id: 'statements',    label: 'Statements',                    dotColor: '#1a6bbf' },
@@ -51,7 +13,23 @@ const ACCORDION_SECTIONS = [
   { id: 'other',         label: 'Other Account Documents',        dotColor: '#9CA3AF' },
 ];
 
-// ── Sub-components ───────────────────────────────────────────────
+// Build last N months as { period: 'YYYY-MM', label: 'Month YYYY' }
+function buildPeriods(count = 24) {
+  const periods = [];
+  const now = new Date();
+  for (let i = 0; i < count; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    periods.push({
+      period: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`,
+      label:  d.toLocaleString('en-US', { month: 'long', year: 'numeric' }),
+      year:   d.getFullYear(),
+    });
+  }
+  return periods;
+}
+
+const ALL_PERIODS = buildPeriods(24);
+const YEARS = [...new Set(ALL_PERIODS.map(p => p.year))];
 
 const IconChevronDown = () => (
   <svg className="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -61,26 +39,18 @@ const IconChevronDown = () => (
 
 function FilterButton({ label, onClick }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="flex items-center gap-1 text-[#1a6bbf] font-bold text-base"
-    >
+    <button type="button" onClick={onClick}
+      className="flex items-center gap-1 text-[#1a6bbf] font-bold text-base">
       {label}
-      <svg className="w-3 h-3 fill-[#1a6bbf]" viewBox="0 0 10 6">
-        <path d="M0 0l5 6 5-6z" />
-      </svg>
+      <svg className="w-3 h-3 fill-[#1a6bbf]" viewBox="0 0 10 6"><path d="M0 0l5 6 5-6z" /></svg>
     </button>
   );
 }
 
 function RadioOption({ label, selected, onSelect }) {
   return (
-    <button
-      type="button"
-      onClick={onSelect}
-      className="w-full flex items-center justify-between px-5 py-4 text-left active:bg-gray-50"
-    >
+    <button type="button" onClick={onSelect}
+      className="w-full flex items-center justify-between px-5 py-4 text-left active:bg-gray-50">
       <span className="text-base font-bold text-[#1a6bbf]">{label}</span>
       <div className="w-5 h-5 rounded-full border-2 border-[#1a6bbf] flex items-center justify-center flex-shrink-0">
         {selected && <div className="w-3 h-3 rounded-full bg-[#1a6bbf]" />}
@@ -89,64 +59,68 @@ function RadioOption({ label, selected, onSelect }) {
   );
 }
 
-function StatementCard({ statement }) {
+function StatementCard({ period, account, onDownload, downloading }) {
   return (
     <div className="flex-shrink-0 w-40 bg-white border border-gray-200 overflow-hidden rounded-sm">
-      <div className="h-[3px] w-full" style={{ backgroundColor: statement.borderColor }} />
-      <div className="px-3 pt-3 pb-5">
-        <p className="text-sm font-semibold text-gray-900 leading-snug mb-5">
-          {statement.title}
+      <div className="h-[3px] w-full bg-[#1a6bbf]" />
+      <div className="px-3 pt-3 pb-4">
+        <p className="text-sm font-semibold text-gray-900 leading-snug mb-3">{period.label}</p>
+        <p className="text-xs text-gray-500 leading-snug truncate">
+          {account ? `${account.accountName} ••••${account.last4}` : '—'}
         </p>
-        <p className="text-xs text-gray-500 leading-snug">{statement.account}</p>
-        <p className="text-xs text-gray-400 mt-1">{statement.date}</p>
+        <button
+          type="button"
+          onClick={onDownload}
+          disabled={downloading}
+          className="mt-3 text-xs font-semibold text-[#1a6bbf] active:opacity-70"
+        >
+          {downloading ? 'Downloading…' : 'Download PDF'}
+        </button>
       </div>
     </div>
   );
 }
 
-function AccordionSection({ section, isExpanded, onToggle }) {
+function AccordionSection({ section, isExpanded, onToggle, children }) {
   return (
     <div>
-      <button
-        type="button"
-        onClick={onToggle}
-        className="w-full flex items-center justify-between px-5 py-5 text-left active:bg-gray-50"
-      >
+      <button type="button" onClick={onToggle}
+        className="w-full flex items-center justify-between px-5 py-5 text-left active:bg-gray-50">
         <div className="flex items-center gap-3">
-          <div
-            className="w-3 h-3 rounded-full flex-shrink-0"
-            style={{ backgroundColor: section.dotColor }}
-          />
+          <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: section.dotColor }} />
           <span className="text-base text-gray-900">{section.label}</span>
         </div>
         <div className={`transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}>
           <IconChevronDown />
         </div>
       </button>
-      <div
-        className={`overflow-hidden transition-all duration-300 ease-in-out ${isExpanded ? 'max-h-40' : 'max-h-0'}`}
-      >
-        <div className="px-5 pb-5">
-          <p className="text-sm text-gray-400">No documents available for this period.</p>
-        </div>
+      <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isExpanded ? 'max-h-96' : 'max-h-0'}`}>
+        <div className="px-5 pb-5">{children}</div>
       </div>
     </div>
   );
 }
 
-// ── Page ─────────────────────────────────────────────────────────
-
 function StatementsAndDocumentsPage() {
   const navigate = useNavigate();
-  const [selectedAccount, setSelectedAccount] = useState('all');
-  const [selectedYear, setSelectedYear]       = useState(2026);
-  const [accountOpen, setAccountOpen]         = useState(false);
-  const [yearOpen, setYearOpen]               = useState(false);
+  const [accounts,      setAccounts]      = useState([]);
+  const [selectedAccId, setSelectedAccId] = useState('all');
+  const [selectedYear,  setSelectedYear]  = useState(YEARS[0]);
+  const [accountOpen,   setAccountOpen]   = useState(false);
+  const [yearOpen,      setYearOpen]      = useState(false);
   const [expandedSections, setExpandedSections] = useState({});
+  const [downloading,   setDownloading]   = useState({});
+  const [loadingAccts,  setLoadingAccts]  = useState(true);
 
   const filterRef = useRef(null);
 
-  // Close dropdowns when clicking outside
+  useEffect(() => {
+    accountService.getAccounts()
+      .then(res => setAccounts(res?.data || []))
+      .catch(() => {})
+      .finally(() => setLoadingAccts(false));
+  }, []);
+
   useEffect(() => {
     function onDocClick(e) {
       if (filterRef.current && !filterRef.current.contains(e.target)) {
@@ -161,34 +135,64 @@ function StatementsAndDocumentsPage() {
   const toggleSection = (id) =>
     setExpandedSections(prev => ({ ...prev, [id]: !prev[id] }));
 
-  const filteredStatements = ALL_STATEMENTS.filter(s => {
-    const byAccount = selectedAccount === 'all' || s.accountId === selectedAccount;
-    const byYear    = s.year === selectedYear;
-    return byAccount && byYear;
-  });
+  const selectedAccount = selectedAccId === 'all' ? null : accounts.find(a => a._id === selectedAccId || a.id === selectedAccId);
+  const accountLabel    = selectedAccId === 'all'
+    ? 'All Accounts'
+    : selectedAccount
+      ? `${selectedAccount.accountName} ••••${selectedAccount.last4}`
+      : 'All Accounts';
 
-  const accountLabel = ACCOUNTS.find(a => a.id === selectedAccount)?.label ?? 'All Accounts';
+  // Periods for the selected year
+  const yearPeriods = ALL_PERIODS.filter(p => p.year === selectedYear);
+  // Most recent 3
+  const recentPeriods = yearPeriods.slice(0, 3);
+
+  const handleDownload = async (accountId, period) => {
+    const key = `${accountId}-${period}`;
+    setDownloading(prev => ({ ...prev, [key]: true }));
+    try {
+      await accountService.downloadStatementPDF(accountId, period);
+    } catch {
+      // silently fail in demo
+    } finally {
+      setDownloading(prev => ({ ...prev, [key]: false }));
+    }
+  };
+
+  // Accounts to show statements for
+  const targetAccounts = selectedAccId === 'all'
+    ? accounts
+    : accounts.filter(a => (a._id || a.id) === selectedAccId);
+
+  // Build cards: cross product of targetAccounts × recentPeriods (max 6)
+  const cards = [];
+  for (const acc of targetAccounts) {
+    for (const period of recentPeriods) {
+      cards.push({ acc, period });
+      if (cards.length >= 6) break;
+    }
+    if (cards.length >= 6) break;
+  }
+
+  const accountOptions = [
+    { id: 'all', label: 'All Accounts' },
+    ...accounts.map(a => ({ id: a._id || a.id, label: `${a.accountName} ••••${a.last4}` })),
+  ];
 
   return (
     <div className="flex flex-col h-screen bg-gray-100 font-sans">
-
       <AppHeader showBackButton title="Statements &..." showCartAndErica />
 
-      {/* Everything below the fixed header */}
       <div className="flex flex-col flex-1 pt-[64px] overflow-hidden">
 
         {/* ── Sticky sub-header ── */}
         <div ref={filterRef} className="bg-white flex-shrink-0 relative z-40 shadow-sm">
-
-          {/* "Provided by Bank of America" */}
           <div className="px-4 pt-2 pb-0">
-            <p className="text-xs text-gray-500 text-right">Provided by Bank of America</p>
+            <p className="text-xs text-gray-500 text-right">Provided by Bank of Molten</p>
           </div>
-
-          {/* Filter row */}
           <div className="flex items-center justify-between px-4 py-3">
             <FilterButton
-              label={accountLabel}
+              label={accountLabel.length > 22 ? accountLabel.slice(0, 22) + '…' : accountLabel}
               onClick={() => { setAccountOpen(p => !p); setYearOpen(false); }}
             />
             <FilterButton
@@ -196,20 +200,19 @@ function StatementsAndDocumentsPage() {
               onClick={() => { setYearOpen(p => !p); setAccountOpen(false); }}
             />
           </div>
-
           <div className="border-b border-gray-200" />
 
           {/* Account dropdown */}
           {accountOpen && (
-            <div className="absolute top-full left-0 w-[72%] bg-white shadow-lg z-50 border-r border-b border-gray-200">
-              {ACCOUNTS.map((acc, i) => (
+            <div className="absolute top-full left-0 w-[75%] bg-white shadow-lg z-50 border-r border-b border-gray-200 max-h-64 overflow-y-auto">
+              {accountOptions.map((acc, i) => (
                 <React.Fragment key={acc.id}>
                   <RadioOption
                     label={acc.label}
-                    selected={selectedAccount === acc.id}
-                    onSelect={() => { setSelectedAccount(acc.id); setAccountOpen(false); }}
+                    selected={selectedAccId === acc.id}
+                    onSelect={() => { setSelectedAccId(acc.id); setAccountOpen(false); }}
                   />
-                  {i < ACCOUNTS.length - 1 && <div className="border-b border-gray-100 mx-5" />}
+                  {i < accountOptions.length - 1 && <div className="border-b border-gray-100 mx-5" />}
                 </React.Fragment>
               ))}
             </div>
@@ -234,25 +237,35 @@ function StatementsAndDocumentsPage() {
 
         {/* ── Scrollable content ── */}
         <div className="flex-1 overflow-y-auto pb-8">
-
-          {/* Most Recent + cards + View All */}
           <div className="bg-white mt-3">
             <p className="px-4 pt-5 pb-4 text-xs text-gray-400 uppercase tracking-widest font-semibold">
               Most Recent
             </p>
 
-            {/* Horizontal scroll */}
-            <div
-              className="flex gap-3 px-4 overflow-x-auto pb-1"
-              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-            >
-              {filteredStatements.length > 0
-                ? filteredStatements.map(s => <StatementCard key={s.id} statement={s} />)
-                : <p className="text-sm text-gray-400 py-2">No statements found.</p>
-              }
+            <div className="flex gap-3 px-4 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+              {loadingAccts ? (
+                [1, 2, 3].map(n => (
+                  <div key={n} className="flex-shrink-0 w-40 h-28 bg-gray-100 rounded-sm animate-pulse" />
+                ))
+              ) : cards.length === 0 ? (
+                <p className="text-sm text-gray-400 py-2">No accounts found.</p>
+              ) : (
+                cards.map(({ acc, period }) => {
+                  const accId = acc._id || acc.id;
+                  const key   = `${accId}-${period.period}`;
+                  return (
+                    <StatementCard
+                      key={key}
+                      period={period}
+                      account={acc}
+                      downloading={!!downloading[key]}
+                      onDownload={() => handleDownload(accId, period.period)}
+                    />
+                  );
+                })
+              )}
             </div>
 
-            {/* VIEW ALL */}
             <div className="px-4 py-4 mt-2">
               <button type="button" className="text-xs text-gray-400 uppercase tracking-widest font-semibold">
                 View All
@@ -268,7 +281,36 @@ function StatementsAndDocumentsPage() {
                   section={section}
                   isExpanded={!!expandedSections[section.id]}
                   onToggle={() => toggleSection(section.id)}
-                />
+                >
+                  {section.id === 'statements' && targetAccounts.length > 0 ? (
+                    <div className="space-y-2">
+                      {yearPeriods.map(p => (
+                        <div key={p.period} className="flex items-center justify-between py-1">
+                          <span className="text-sm text-gray-700">{p.label}</span>
+                          <div className="flex gap-3">
+                            {targetAccounts.map(acc => {
+                              const accId = acc._id || acc.id;
+                              const key   = `${accId}-${p.period}`;
+                              return (
+                                <button
+                                  key={accId}
+                                  type="button"
+                                  disabled={!!downloading[key]}
+                                  onClick={() => handleDownload(accId, p.period)}
+                                  className="text-xs font-semibold text-[#1a6bbf]"
+                                >
+                                  {downloading[key] ? '…' : `••••${acc.last4}`}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-400">No documents available for this period.</p>
+                  )}
+                </AccordionSection>
                 {i < ACCORDION_SECTIONS.length - 1 && <InsetDivider color={200} />}
               </React.Fragment>
             ))}
@@ -276,11 +318,8 @@ function StatementsAndDocumentsPage() {
 
           {/* Manage Paperless Settings */}
           <div className="bg-white mt-3">
-            <button
-              type="button"
-              onClick={() => navigate('/go-paperless')}
-              className="w-full flex items-center gap-4 px-5 py-5 text-left active:bg-gray-50"
-            >
+            <button type="button" onClick={() => navigate('/go-paperless')}
+              className="w-full flex items-center gap-4 px-5 py-5 text-left active:bg-gray-50">
               <img src={imgPaperless} alt="Paperless" className="w-10 h-10 object-contain flex-shrink-0" />
               <div>
                 <p className="text-base font-bold text-gray-900">Manage your Paperless Settings</p>
@@ -289,7 +328,6 @@ function StatementsAndDocumentsPage() {
             </button>
           </div>
 
-          {/* Info paragraphs */}
           <div className="mt-3 px-4 pt-4 pb-2">
             <p className="text-sm text-gray-500 leading-relaxed mb-4">
               Please visit Online Banking to request older statements.
@@ -298,13 +336,12 @@ function StatementsAndDocumentsPage() {
               Please consider the privacy and security settings of your device or third party applications before opening, forwarding or downloading your statements, they are outside of the bank&#39;s secure mobile application.
             </p>
             <p className="text-sm text-gray-500 leading-relaxed">
-              To locate a tax form, first search in current year, and then search in earlier years until you&#39;ve located it. Tax statements can only be downloaded because they contain your Tax Identification Number (TIN), Social Security Number (SSN) and/or full account number. Looking for your Tax Documents and don&#39;t see them? Ask Erica for &#8220;Tax Statements&#8221;.
+              To locate a tax form, first search in current year, and then search in earlier years until you&#39;ve located it.
             </p>
           </div>
 
           <LegalDisclosure />
         </div>
-
       </div>
     </div>
   );

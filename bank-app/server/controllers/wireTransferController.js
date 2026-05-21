@@ -9,6 +9,9 @@ import { getIO }                 from '../socket/index.js';
 
 const round2 = (n) => Math.round(n * 100) / 100;
 
+// Wire fee charged to sender on every executed wire (blocked/pending wires are not charged).
+const WIRE_FEE = 30;
+
 function recipientName(r) {
   return [r.firstName, r.lastName, r.businessName].filter(Boolean).join(' ') || 'Recipient';
 }
@@ -40,8 +43,11 @@ export async function submitWire(req, res, next) {
 
     if (!account)   return res.status(404).json({ success: false, message: 'Source account not found.' });
     if (!recipient) return res.status(404).json({ success: false, message: 'Recipient not found.' });
-    if (account.availableBalance < parsedAmount) {
-      return res.status(400).json({ success: false, message: 'Insufficient funds.' });
+    if (account.availableBalance < parsedAmount + WIRE_FEE) {
+      return res.status(400).json({
+        success: false,
+        message: `Insufficient funds. Wire requires $${parsedAmount.toFixed(2)} + $${WIRE_FEE.toFixed(2)} fee = $${(parsedAmount + WIRE_FEE).toFixed(2)}.`,
+      });
     }
 
     const fraud = await evaluateTransfer({ userId, accountId: fromAccountId, amount: parsedAmount });
@@ -57,6 +63,7 @@ export async function submitWire(req, res, next) {
         fromAccount: fromAccountId,
         recipient:   recipientId,
         amount:      parsedAmount,
+        fee:         WIRE_FEE,
         memo,
         status:      'blocked',
         riskScore:   fraud.riskScore,
@@ -105,6 +112,7 @@ export async function submitWire(req, res, next) {
         fromAccount: fromAccountId,
         recipient:   recipientId,
         amount:      parsedAmount,
+        fee:         WIRE_FEE,
         memo,
         status:      'pending-review',
         riskScore:   fraud.riskScore,
@@ -148,19 +156,23 @@ export async function submitWire(req, res, next) {
     }
 
     // ── LOW / MEDIUM → execute immediately ────────────────────────────
+    // Deduct amount + WIRE_FEE in a single withdrawal so both are atomic.
+    const totalDebit = round2(parsedAmount + WIRE_FEE);
     let engineResult;
     try {
       engineResult = await engine.withdrawFunds({
         accountId:   fromAccountId,
-        amount:      parsedAmount,
-        description: `Wire transfer to ${rName}`,
+        amount:      totalDebit,
+        description: `Wire transfer to ${rName} (incl. $${WIRE_FEE.toFixed(2)} fee)`,
         category:    'wire',
         initiatedBy: userId,
         metadata: {
-          recipientId: String(recipientId),
-          fraudFlags:  fraud.fraudFlags,
-          fraudStatus: fraud.outcome === 'monitoring' ? 'monitoring' : 'clean',
-          riskScore:   fraud.riskScore,
+          recipientId:     String(recipientId),
+          transferAmount:  parsedAmount,
+          wireFee:         WIRE_FEE,
+          fraudFlags:      fraud.fraudFlags,
+          fraudStatus:     fraud.outcome === 'monitoring' ? 'monitoring' : 'clean',
+          riskScore:       fraud.riskScore,
         },
       });
     } catch (engineErr) {
@@ -182,6 +194,7 @@ export async function submitWire(req, res, next) {
       fromAccount:        fromAccountId,
       recipient:          recipientId,
       amount:             parsedAmount,
+      fee:                WIRE_FEE,
       memo,
       status:             'processing',
       riskScore:          fraud.riskScore,
@@ -197,6 +210,8 @@ export async function submitWire(req, res, next) {
         wireId:           String(wire._id),
         referenceNumber:  wire.referenceNumber,
         amount:           parsedAmount,
+        fee:              WIRE_FEE,
+        total:            totalDebit,
         riskLevel:        fraud.riskLevel,
         status:           wire.status,
         recipientName:    rName,
@@ -352,8 +367,13 @@ export async function approveWire(req, res, next) {
     }
 
     const account = await BankAccount.findById(wire.fromAccount._id);
-    if (!account || account.availableBalance < wire.amount) {
-      return res.status(400).json({ success: false, message: 'Insufficient funds to approve this wire.' });
+    const wireFeeToCharge = round2(wire.fee ?? WIRE_FEE);
+    const totalDebitOnApproval = round2(wire.amount + wireFeeToCharge);
+    if (!account || account.availableBalance < totalDebitOnApproval) {
+      return res.status(400).json({
+        success: false,
+        message: `Insufficient funds to approve this wire. Requires $${totalDebitOnApproval.toFixed(2)} (transfer + $${wireFeeToCharge.toFixed(2)} fee).`,
+      });
     }
 
     const rName = recipientName(wire.recipient);
@@ -362,14 +382,16 @@ export async function approveWire(req, res, next) {
     try {
       engineResult = await engine.withdrawFunds({
         accountId:   String(wire.fromAccount._id),
-        amount:      wire.amount,
-        description: `Wire transfer to ${rName} (admin approved)`,
+        amount:      totalDebitOnApproval,
+        description: `Wire transfer to ${rName} (admin approved, incl. $${wireFeeToCharge.toFixed(2)} fee)`,
         category:    'wire',
         initiatedBy: req.user._id,
         metadata: {
-          wireId:        String(wire._id),
-          approvedBy:    String(req.user._id),
-          originalFlags: wire.fraudFlags,
+          wireId:         String(wire._id),
+          approvedBy:     String(req.user._id),
+          originalFlags:  wire.fraudFlags,
+          transferAmount: wire.amount,
+          wireFee:        wireFeeToCharge,
         },
       });
     } catch (engineErr) {
@@ -405,6 +427,56 @@ export async function approveWire(req, res, next) {
       userId:   wire.user._id,
       title:    'Wire transfer approved',
       message:  `Your wire transfer of $${wire.amount.toFixed(2)} to ${rName} has been approved and is now processing.`,
+      type:     'success',
+      category: 'transfer',
+      metadata: { wireId: String(wire._id), referenceNumber: wire.referenceNumber },
+    }).catch(() => {});
+
+    return res.status(200).json({ success: true, data: wire });
+  } catch (err) {
+    next(err);
+  }
+}
+
+// POST /api/admin/wire-transfers/:id/settle
+export async function settleWire(req, res, next) {
+  try {
+    const wire = await WireTransfer.findById(req.params.id)
+      .populate('user',      'firstName lastName email')
+      .populate('recipient', 'firstName lastName businessName nickname');
+
+    if (!wire) return res.status(404).json({ success: false, message: 'Wire transfer not found.' });
+    if (wire.status !== 'processing') {
+      return res.status(400).json({ success: false, message: `Cannot settle a wire with status: ${wire.status}.` });
+    }
+
+    wire.status    = 'completed';
+    wire.settledAt = new Date();
+    wire.settledBy = req.user._id;
+    if (req.body.notes) wire.reviewNotes = req.body.notes;
+    await wire.save();
+
+    audit.logWireSettlement({ admin: req.user, wire, req }).catch(() => {});
+
+    const io = getIO();
+    if (io) {
+      io.to('admins').emit('admin:wireUpdated', {
+        wireId:    String(wire._id),
+        status:    'completed',
+        settledBy: String(req.user._id),
+      });
+      io.to(`user:${wire.user._id}`).emit('wire:settled', {
+        wireId:          String(wire._id),
+        referenceNumber: wire.referenceNumber,
+        status:          'completed',
+      });
+    }
+
+    const rName = recipientName(wire.recipient);
+    createNotification({
+      userId:   wire.user._id,
+      title:    'Wire transfer completed',
+      message:  `Your wire transfer of $${wire.amount.toFixed(2)} to ${rName} has been successfully settled.`,
       type:     'success',
       category: 'transfer',
       metadata: { wireId: String(wire._id), referenceNumber: wire.referenceNumber },

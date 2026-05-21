@@ -4,6 +4,39 @@ import AdminTopbar from '../../../components/AdminTopbar.jsx';
 import AdminBadge from '../../../components/AdminBadge.jsx';
 import { transfersService, wireService } from '../../../services/adminService.js';
 
+function ConfirmModal({ title, message, placeholder, onConfirm, onCancel, loading }) {
+  const [value, setValue] = useState('');
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 p-6">
+        <h3 className="text-base font-semibold text-slate-800 mb-1">{title}</h3>
+        <p className="text-sm text-slate-500 mb-4">{message}</p>
+        {placeholder && (
+          <textarea
+            className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400 resize-none mb-4"
+            rows={3}
+            placeholder={placeholder}
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+          />
+        )}
+        <div className="flex gap-2 justify-end">
+          <button onClick={onCancel} className="px-4 py-2 text-xs text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50">
+            Cancel
+          </button>
+          <button
+            onClick={() => onConfirm(value)}
+            disabled={loading || (placeholder && !value.trim())}
+            className="px-4 py-2 text-xs font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+          >
+            {loading ? 'Processing…' : 'Confirm'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const fmtDate = (d) => d ? new Date(d).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—';
 const fmtUSD  = (n) => n == null ? '—' : '$' + Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -44,6 +77,11 @@ export default function TransfersPage() {
   const [wireTotal,   setWireTotal]   = useState(0);
   const [wireFilters, setWireFilters] = useState({ status: '' });
 
+  // Action modals
+  const [modal,       setModal]       = useState(null); // { type: 'settle'|'reverse', id, label }
+  const [actionLoading, setActionLoading] = useState(false);
+  const [actionError,   setActionError]   = useState('');
+
   const limit = 30;
 
   const fetchTransfers = useCallback(async (p, f) => {
@@ -76,8 +114,47 @@ export default function TransfersPage() {
   const setFilter     = (key, val) => { setFilters((f) => ({ ...f, [key]: val })); setPage(1); };
   const setWireFilter = (key, val) => { setWireFilters((f) => ({ ...f, [key]: val })); setWirePage(1); };
 
+  const handleAction = async (reason) => {
+    if (!modal) return;
+    setActionLoading(true);
+    setActionError('');
+    try {
+      if (modal.type === 'settle') {
+        await wireService.settle(modal.id, reason);
+        setWires((prev) => prev.map((w) => w._id === modal.id ? { ...w, status: 'completed' } : w));
+      } else if (modal.type === 'reverse') {
+        await transfersService.reverse(modal.id, reason);
+        setTransfers((prev) => prev.map((tx) => tx.id === modal.id ? { ...tx, status: 'reversed' } : tx));
+      }
+      setModal(null);
+    } catch (err) {
+      setActionError(err?.message || 'Action failed. Please try again.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   return (
     <div className="flex-1 overflow-y-auto">
+      {modal && (
+        <ConfirmModal
+          title={modal.type === 'settle' ? 'Settle Wire Transfer' : 'Reverse Transaction'}
+          message={modal.type === 'settle'
+            ? `Mark wire ${modal.label} as completed. This cannot be undone.`
+            : `Reverse transaction ${modal.label}. Funds will be returned to the original account.`
+          }
+          placeholder={modal.type === 'settle' ? 'Optional notes…' : 'Reason for reversal (required)'}
+          loading={actionLoading}
+          onConfirm={handleAction}
+          onCancel={() => { setModal(null); setActionError(''); }}
+        />
+      )}
+      {actionError && (
+        <div className="fixed bottom-4 right-4 z-50 bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg px-4 py-3 shadow-lg">
+          {actionError}
+          <button onClick={() => setActionError('')} className="ml-3 text-red-400 hover:text-red-700">✕</button>
+        </div>
+      )}
       <AdminTopbar
         title="Transfer Monitoring"
         subtitle={`${(activeTab === 'transfers' ? total : wireTotal).toLocaleString()} records`}
@@ -178,6 +255,7 @@ export default function TransfersPage() {
                     <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Status</th>
                     <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Amount</th>
                     <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide hidden lg:table-cell">Ref</th>
+                    <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50">
@@ -200,6 +278,16 @@ export default function TransfersPage() {
                         </span>
                       </td>
                       <td className="px-4 py-3 text-[10px] text-slate-400 font-mono hidden lg:table-cell">{tx.referenceNumber?.slice(-8)}</td>
+                      <td className="px-4 py-3">
+                        {tx.status === 'completed' && (
+                          <button
+                            onClick={() => setModal({ type: 'reverse', id: tx.id, label: tx.referenceNumber?.slice(-8) || tx.id })}
+                            className="text-[11px] px-2.5 py-1 rounded border border-red-200 text-red-600 hover:bg-red-50 transition-colors whitespace-nowrap"
+                          >
+                            Reverse
+                          </button>
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -238,6 +326,7 @@ export default function TransfersPage() {
                     <th className="text-left px-4 py-3 text-[10px] font-semibold text-slate-500 uppercase tracking-wide">Status</th>
                     <th className="text-left px-4 py-3 text-[10px] font-semibold text-slate-500 uppercase tracking-wide hidden md:table-cell">Risk</th>
                     <th className="px-4 py-3 text-[10px] font-semibold text-slate-500 uppercase tracking-wide hidden lg:table-cell">Ref</th>
+                    <th className="px-4 py-3 text-[10px] font-semibold text-slate-500 uppercase tracking-wide">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50">
@@ -259,6 +348,7 @@ export default function TransfersPage() {
                         </td>
                         <td className="px-4 py-3">
                           <p className="font-bold text-slate-900 whitespace-nowrap">{fmtUSD(w.amount)}</p>
+                          {w.fee > 0 && <p className="text-[10px] text-slate-400">+{fmtUSD(w.fee)} fee</p>}
                         </td>
                         <td className="px-4 py-3"><WireStatusBadge status={w.status} /></td>
                         <td className="px-4 py-3 hidden md:table-cell">
@@ -266,6 +356,16 @@ export default function TransfersPage() {
                           <span className="text-[10px] text-slate-400 ml-1">{w.riskLevel}</span>
                         </td>
                         <td className="px-4 py-3 text-[10px] text-slate-400 font-mono hidden lg:table-cell">{w.referenceNumber?.slice(-10)}</td>
+                        <td className="px-4 py-3">
+                          {w.status === 'processing' && (
+                            <button
+                              onClick={() => setModal({ type: 'settle', id: w._id, label: w.referenceNumber?.slice(-10) || w._id })}
+                              className="text-[11px] px-2.5 py-1 rounded border border-green-200 text-green-700 hover:bg-green-50 transition-colors whitespace-nowrap"
+                            >
+                              Settle
+                            </button>
+                          )}
+                        </td>
                       </tr>
                     );
                   })}

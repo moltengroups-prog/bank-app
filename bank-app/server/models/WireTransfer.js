@@ -54,6 +54,15 @@ const wireTransferSchema = new mongoose.Schema(
       default: 1,
     },
 
+    // ── Fee ──────────────────────────────────────────────────────────
+    // Wire transfer fee charged to the sender (in addition to amount).
+    // Recorded here for display; the deduction is part of the engine withdrawal.
+    fee: {
+      type:    Number,
+      default: 0,
+      min:     0,
+    },
+
     // ── Transfer details ─────────────────────────────────────────────
     memo: {
       type:    String,
@@ -105,9 +114,18 @@ const wireTransferSchema = new mongoose.Schema(
       type:    Date,
       default: null,
     },
+    settledAt: {
+      type:    Date,
+      default: null,
+    },
 
     // ── Admin review ─────────────────────────────────────────────────
     reviewedBy: {
+      type:    mongoose.Schema.Types.ObjectId,
+      ref:     'User',
+      default: null,
+    },
+    settledBy: {
       type:    mongoose.Schema.Types.ObjectId,
       ref:     'User',
       default: null,

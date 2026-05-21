@@ -363,6 +363,23 @@ export async function logWireBlocked({ user, wire, req }) {
   });
 }
 
+/** Admin settled (completed) a processing wire. */
+export async function logWireSettlement({ admin, wire, req }) {
+  return log({
+    actor:       admin._id,
+    actorEmail:  admin.email,
+    actorRole:   admin.role,
+    action:      AUDIT_ACTIONS.WIRE_SETTLED,
+    targetUser:  wire.user?._id ?? wire.user,
+    beforeState: { status: 'processing' },
+    afterState:  { status: 'completed', settledAt: wire.settledAt },
+    severity:    'info',
+    ipAddress:   ip(req),
+    userAgent:   ua(req),
+    metadata:    { wireId: String(wire._id), referenceNumber: wire.referenceNumber, amount: wire.amount },
+  });
+}
+
 /** Support agent action (ticket open/close/message/escalate). */
 export async function logSupportAction({ agent, action, targetUser, conversation, metadata = {}, req }) {
   return log({
@@ -375,5 +392,105 @@ export async function logSupportAction({ agent, action, targetUser, conversation
     ipAddress:  ip(req),
     userAgent:  ua(req),
     metadata:   { ...metadata, conversationId: conversation?._id?.toString() },
+  });
+}
+
+/** Bill pay generic action (payee added, etc). */
+export async function logBillPayAction({ user, action: actionLabel, payeeId, payeeName, req }) {
+  return log({
+    actor:      user._id,
+    actorEmail: user.email,
+    actorRole:  user.role,
+    action:     AUDIT_ACTIONS.BILLPAY_SCHEDULED,
+    targetUser: user._id,
+    severity:   'info',
+    ipAddress:  ip(req),
+    userAgent:  ua(req),
+    metadata:   { payeeId, payeeName, actionLabel },
+  });
+}
+
+/** User scheduled a bill payment. */
+export async function logBillPayScheduled({ user, payment, payee, req }) {
+  return log({
+    actor:      user._id,
+    actorEmail: user.email,
+    actorRole:  user.role,
+    action:     AUDIT_ACTIONS.BILLPAY_SCHEDULED,
+    targetUser: user._id,
+    severity:   'info',
+    ipAddress:  ip(req),
+    userAgent:  ua(req),
+    metadata:   {
+      paymentId:          String(payment._id),
+      confirmationNumber: payment.confirmationNumber,
+      amount:             payment.amount,
+      payeeName:          payee.name,
+      scheduledDate:      payment.scheduledDate,
+      isRecurring:        payment.isRecurring,
+      recurringRule:      payment.recurringRule,
+    },
+  });
+}
+
+/** Bill payment was processed (completed or failed). */
+export async function logBillPayProcessed({ payment, payee, success, reason }) {
+  return log({
+    action:     success ? AUDIT_ACTIONS.BILLPAY_PROCESSED : AUDIT_ACTIONS.BILLPAY_FAILED,
+    targetUser: payment.user,
+    severity:   success ? 'info' : 'warning',
+    metadata:   {
+      paymentId:          String(payment._id),
+      confirmationNumber: payment.confirmationNumber,
+      amount:             payment.amount,
+      payeeName:          payee?.name ?? '',
+      reason:             reason ?? '',
+    },
+  });
+}
+
+/** User cancelled a pending bill payment. */
+export async function logBillPayCancelled({ user, payment, req }) {
+  return log({
+    actor:      user._id,
+    actorEmail: user.email,
+    actorRole:  user.role,
+    action:     AUDIT_ACTIONS.BILLPAY_CANCELLED,
+    targetUser: user._id,
+    severity:   'info',
+    ipAddress:  ip(req),
+    userAgent:  ua(req),
+    metadata:   { paymentId: String(payment._id), confirmationNumber: payment.confirmationNumber, amount: payment.amount },
+  });
+}
+
+/** Admin refunded a completed bill payment. */
+export async function logBillPayRefunded({ admin, payment, req }) {
+  return log({
+    actor:      admin._id,
+    actorEmail: admin.email,
+    actorRole:  admin.role,
+    action:     AUDIT_ACTIONS.BILLPAY_REFUNDED,
+    targetUser: payment.user?._id ?? payment.user,
+    severity:   'warning',
+    ipAddress:  ip(req),
+    userAgent:  ua(req),
+    metadata:   { paymentId: String(payment._id), confirmationNumber: payment.confirmationNumber, amount: payment.amount },
+  });
+}
+
+/** User downloaded/viewed a statement. */
+export async function logStatementDownload({ user, account, period, req }) {
+  return log({
+    actor:         user._id,
+    actorEmail:    user.email,
+    actorRole:     user.role,
+    action:        AUDIT_ACTIONS.STATEMENT_DOWNLOADED,
+    targetUser:    user._id,
+    targetAccount: account._id,
+    severity:      'info',
+    ipAddress:     ip(req),
+    userAgent:     ua(req),
+    metadata:      { accountLast4: account.last4, period },
   });
 }

@@ -43,9 +43,20 @@ export const AUDIT_ACTIONS = Object.freeze({
   // Wire transfers
   WIRE_SUBMITTED:        'wire.submitted',
   WIRE_APPROVED:         'wire.approved',
+  WIRE_SETTLED:          'wire.settled',
   WIRE_REJECTED:         'wire.rejected',
   WIRE_BLOCKED:          'wire.blocked',
   WIRE_CANCELLED:        'wire.cancelled',
+
+  // Bill Pay
+  BILLPAY_SCHEDULED:     'billpay.scheduled',
+  BILLPAY_PROCESSED:     'billpay.processed',
+  BILLPAY_FAILED:        'billpay.failed',
+  BILLPAY_CANCELLED:     'billpay.cancelled',
+  BILLPAY_REFUNDED:      'billpay.refunded',
+
+  // Account Operations
+  STATEMENT_DOWNLOADED:  'account.statement.downloaded',
 
   // System
   DATA_EXPORT:           'data.export',

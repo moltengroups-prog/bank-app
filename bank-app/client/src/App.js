@@ -22,6 +22,8 @@ import BillPayPage from './pages/BillPayPage';
 import AddPayeePage from './pages/AddPayeePage';
 import CompanyPayeePage from './pages/CompanyPayeePage';
 import BillPayPayeeDetailsPage from './pages/BillPayPayeeDetailsPage';
+import PayBillPage from './pages/PayBillPage';
+import ExternalTransferPage from './pages/ExternalTransferPage';
 import WireTransferPage from './pages/WireTransferPage';
 import WireStartPage from './pages/WireStartPage';
 import WireAddRecipientPage from './pages/WireAddRecipientPage';
@@ -93,6 +95,8 @@ function App() {
       <Route path="/add-payee" element={<AddPayeePage />} />
       <Route path="/company-payee" element={<CompanyPayeePage />} />
       <Route path="/bill-pay-payee-details" element={<BillPayPayeeDetailsPage />} />
+      <Route path="/pay-bill" element={<PayBillPage />} />
+      <Route path="/transfer/external" element={<ExternalTransferPage />} />
       <Route path="/wire-transfer" element={<WireTransferPage />} />
       <Route path="/wire-transfer/start" element={<WireStartPage />} />
       <Route path="/wire-transfer/add-recipient" element={<WireAddRecipientPage />} />

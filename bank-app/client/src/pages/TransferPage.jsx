@@ -318,9 +318,9 @@ function TransferPage() {
             <IconLightbulb />
           </div>
           <p className="text-sm text-gray-700">
-            Sending a wire?{' '}
-            <button type="button" className="text-[#1a6bbf] font-medium">
-              Start here.
+            Transferring to another bank?{' '}
+            <button type="button" onClick={() => navigate('/transfer/external')} className="text-[#1a6bbf] font-medium">
+              External transfer.
             </button>
           </p>
         </div>

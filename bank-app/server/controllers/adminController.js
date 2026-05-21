@@ -3,8 +3,12 @@ import BankAccount from '../models/BankAccount.js';
 import Transaction from '../models/Transaction.js';
 import SupportConversation from '../models/SupportConversation.js';
 import SupportMessage from '../models/SupportMessage.js';
+import AuditLog    from '../models/AuditLog.js';
+import LedgerEntry from '../models/LedgerEntry.js';
+import BillPayment from '../models/BillPayment.js';
 import { createError } from '../middleware/error.js';
 import { getIO } from '../socket/index.js';
+import { createNotification } from '../utils/notify.js';
 import * as engine from '../services/bankingEngine.js';
 import * as audit  from '../services/auditService.js';
 import { AUDIT_ACTIONS } from '../models/AuditLog.js';
@@ -540,6 +544,169 @@ export async function getAdminTransfers(req, res, next) {
     res.json({
       success: true,
       data,
+      pagination: { page: parsedPage, limit: parsedLimit, total, pages: Math.ceil(total / parsedLimit) },
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+// ── POST /api/admin/transactions/:id/reverse ──────────────────────
+export async function reverseAdminTransaction(req, res, next) {
+  try {
+    const { reason } = req.body;
+    if (!reason?.trim()) return next(createError('reason is required', 400));
+
+    const transaction = await Transaction.findById(req.params.id)
+      .populate('account', 'accountName last4')
+      .populate('user',    'firstName lastName email');
+    if (!transaction) return next(createError('Transaction not found', 404));
+
+    if (['reversed', 'failed', 'pending'].includes(transaction.status)) {
+      return next(createError(`Cannot reverse a transaction with status: ${transaction.status}`, 400));
+    }
+
+    const reversalResult = await engine.reverseTransaction({
+      transactionId: req.params.id,
+      reason:        reason.trim(),
+      adminId:       req.user._id,
+    });
+
+    audit.logTransactionReversal({ admin: req.user, originalTransaction: transaction, reversalResult, req }).catch(() => {});
+
+    const io = getIO();
+    if (io) {
+      io.to('admins').emit('admin:transactionReversed', {
+        transactionId:   req.params.id,
+        referenceNumber: transaction.referenceNumber,
+        amount:          transaction.amount,
+        reason:          reason.trim(),
+        reversedBy:      String(req.user._id),
+      });
+    }
+
+    // Notify all affected users (sender + recipient for transfers)
+    const notifPromises = [
+      createNotification({
+        userId:   transaction.user._id,
+        title:    'Transaction reversed',
+        message:  `A transaction of $${transaction.amount.toFixed(2)} has been reversed. Reason: ${reason.trim()}`,
+        type:     'warning',
+        category: 'transfer',
+        metadata: { transactionId: req.params.id, referenceNumber: transaction.referenceNumber },
+      }),
+    ];
+
+    // If this was a double-entry transfer, find and notify the other leg's user
+    if (reversalResult.reversals?.length > 1) {
+      for (const reversal of reversalResult.reversals.slice(1)) {
+        const otherTx = await Transaction.findById(reversal._id).select('user amount');
+        if (otherTx && String(otherTx.user) !== String(transaction.user._id)) {
+          notifPromises.push(
+            createNotification({
+              userId:   otherTx.user,
+              title:    'Transfer reversed',
+              message:  `A transfer of $${otherTx.amount.toFixed(2)} has been reversed by the bank. Reason: ${reason.trim()}`,
+              type:     'warning',
+              category: 'transfer',
+              metadata: { transactionId: String(reversal._id) },
+            })
+          );
+        }
+      }
+    }
+
+    Promise.all(notifPromises).catch(() => {});
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        originalTransactionId: req.params.id,
+        referenceNumber:       transaction.referenceNumber,
+        amount:                transaction.amount,
+        reason:                reason.trim(),
+        reversals:             reversalResult.reversals,
+      },
+    });
+  } catch (err) {
+    if (err.code === 'TRANSACTION_NOT_FOUND') return next(createError(err.message, 404));
+    if (err.code === 'ALREADY_REVERSED')      return next(createError(err.message, 400));
+    next(err);
+  }
+}
+
+// ── GET /api/admin/audit-logs ─────────────────────────────────────
+export async function getAuditLogs(req, res, next) {
+  try {
+    const { page = 1, limit = 30, action, severity, actorEmail, fromDate, toDate } = req.query;
+    const parsedPage  = Math.max(parseInt(page) || 1, 1);
+    const parsedLimit = Math.min(Math.max(parseInt(limit) || 30, 1), 100);
+    const skip = (parsedPage - 1) * parsedLimit;
+
+    const filter = {};
+    if (action)     filter.action     = action;
+    if (severity)   filter.severity   = severity;
+    if (actorEmail) filter.actorEmail = new RegExp(actorEmail, 'i');
+    if (fromDate || toDate) {
+      filter.createdAt = {};
+      if (fromDate) filter.createdAt.$gte = new Date(fromDate);
+      if (toDate)   filter.createdAt.$lte = new Date(toDate);
+    }
+
+    const [logs, total] = await Promise.all([
+      AuditLog.find(filter)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(parsedLimit)
+        .populate('actor',       'firstName lastName email')
+        .populate('targetUser',  'firstName lastName email')
+        .lean(),
+      AuditLog.countDocuments(filter),
+    ]);
+
+    res.json({
+      success: true,
+      data:    logs,
+      pagination: { page: parsedPage, limit: parsedLimit, total, pages: Math.ceil(total / parsedLimit) },
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+// ── GET /api/admin/ledger ─────────────────────────────────────────
+export async function getLedgerEntries(req, res, next) {
+  try {
+    const { page = 1, limit = 30, accountId, userId, type, fromDate, toDate } = req.query;
+    const parsedPage  = Math.max(parseInt(page) || 1, 1);
+    const parsedLimit = Math.min(Math.max(parseInt(limit) || 30, 1), 100);
+    const skip = (parsedPage - 1) * parsedLimit;
+
+    const filter = {};
+    if (accountId) filter.account = accountId;
+    if (userId)    filter.user    = userId;
+    if (type)      filter.type    = type;
+    if (fromDate || toDate) {
+      filter.createdAt = {};
+      if (fromDate) filter.createdAt.$gte = new Date(fromDate);
+      if (toDate)   filter.createdAt.$lte = new Date(toDate);
+    }
+
+    const [entries, total] = await Promise.all([
+      LedgerEntry.find(filter)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(parsedLimit)
+        .populate('account',       'accountName last4 accountType')
+        .populate('user',          'firstName lastName email')
+        .populate('transactionId', 'referenceNumber description category status')
+        .lean(),
+      LedgerEntry.countDocuments(filter),
+    ]);
+
+    res.json({
+      success: true,
+      data:    entries,
       pagination: { page: parsedPage, limit: parsedLimit, total, pages: Math.ceil(total / parsedLimit) },
     });
   } catch (err) {

@@ -23,6 +23,7 @@ export const accountsService = {
 
 export const transfersService = {
   getTransfers: (params = {}) => api.get(`/admin/transfers${qs(params)}`),
+  reverse:      (id, reason)  => api.post(`/admin/transactions/${id}/reverse`, { reason }),
 };
 
 export const analyticsService = {
@@ -51,4 +52,20 @@ export const wireService = {
   getHistory:  (params = {})          => api.get(`/admin/wire-transfers${qs(params)}`),
   approve:     (id, notes = '')       => api.post(`/admin/wire-transfers/${id}/approve`, { notes }),
   reject:      (id, reason)           => api.post(`/admin/wire-transfers/${id}/reject`, { reason }),
+  settle:      (id, notes = '')       => api.post(`/admin/wire-transfers/${id}/settle`,  { notes }),
+};
+
+export const auditService = {
+  getLogs: (params = {}) => api.get(`/admin/audit-logs${qs(params)}`),
+};
+
+export const ledgerService = {
+  getEntries: (params = {}) => api.get(`/admin/ledger${qs(params)}`),
+};
+
+export const billPayAdminService = {
+  getPayments:        (params = {}) => api.get(`/admin/bill-pay/payments${qs(params)}`),
+  getFailedPayments:  ()            => api.get('/admin/bill-pay/payments/failed'),
+  retryPayment:       (id)          => api.post(`/admin/bill-pay/payments/${id}/retry`, {}),
+  refundPayment:      (id, reason)  => api.post(`/admin/bill-pay/payments/${id}/refund`, { reason }),
 };

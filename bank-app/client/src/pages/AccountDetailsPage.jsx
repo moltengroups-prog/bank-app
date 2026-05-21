@@ -460,7 +460,7 @@ function AccountDetailsPage() {
             <p className="text-gray-400 text-xs font-semibold tracking-widest uppercase">Account Management</p>
           </div>
 
-          <button type="button" className="w-full flex items-center justify-between px-5 py-4">
+          <button type="button" onClick={() => navigate('/statements-documents')} className="w-full flex items-center justify-between px-5 py-4">
             <span className="text-gray-900 text-base font-medium">Statements &amp; Documents</span>
             <ChevronRight />
           </button>
