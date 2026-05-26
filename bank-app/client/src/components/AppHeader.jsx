@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import imgErica from '../assets/images/btn-erica-red.jpeg';
 import InsetDivider from './InsetDivider';
 import { useNotificationStore } from '../store/notificationStore';
+import { useAuthStore } from '../store/authStore';
+import { disconnectSocket } from '../socket/socket';
 
 const IconHamburger = () => (
   <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -73,7 +75,17 @@ function AppHeader({
   const gapClass = gapClasses[iconGap] || 'gap-4';
   const hasRightGroup = showInbox || showProducts || showLogout || showEricaInline;
 
-  const { unreadCount: liveCount, fetchUnreadCount } = useNotificationStore();
+  // Granular selectors — AppHeader re-renders only when unreadCount changes,
+  // not when notifications list or loading flags update.
+  const liveCount       = useNotificationStore((s) => s.unreadCount);
+  const fetchUnreadCount = useNotificationStore((s) => s.fetchUnreadCount);
+  const logout          = useAuthStore((s) => s.logout);
+
+  const handleLogout = async () => {
+    disconnectSocket();
+    await logout();
+    navigate('/', { replace: true });
+  };
   const displayCount = showInbox ? liveCount : 0;
 
   useEffect(() => {
@@ -166,7 +178,7 @@ function AppHeader({
                 </button>
               )}
               {showLogout && (
-                <button type="button" className="flex flex-col items-center gap-0.5">
+                <button type="button" onClick={handleLogout} className="flex flex-col items-center gap-0.5">
                   <IconLogOut />
                   <span className="text-[10px] font-medium text-gray-600">Log Out</span>
                 </button>

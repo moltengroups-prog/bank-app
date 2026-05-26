@@ -15,16 +15,33 @@ function loadFromStorage() {
   }
 }
 
-export const useAdminStore = create((set, get) => ({
+export const useAdminStore = create((set) => ({
   ...loadFromStorage(),
   loading: false,
   error:   null,
 
+  // Step 1: validate credentials → returns { requiresOTP, otpToken } or throws
   login: async (email, password) => {
     set({ loading: true, error: null });
     try {
       const res = await authService.login(email, password);
-      // Auth controller returns { success, token, user } at top level
+      set({ loading: false });
+      if (res?.requiresOTP) {
+        return { requiresOTP: true, otpToken: res.otpToken };
+      }
+      // Fallback: direct token (shouldn't happen with OTP enabled)
+      throw new Error('Unexpected response from server.');
+    } catch (err) {
+      set({ loading: false, error: err.message });
+      return null;
+    }
+  },
+
+  // Step 2: verify OTP code → establish full admin session
+  verifyOTP: async (otpToken, code) => {
+    set({ loading: true, error: null });
+    try {
+      const res   = await authService.verifyOTP(otpToken, code);
       const user  = res?.user;
       const token = res?.token;
 
@@ -42,6 +59,9 @@ export const useAdminStore = create((set, get) => ({
       return false;
     }
   },
+
+  // Resend OTP (delegates error to caller so login page can show its own UI)
+  resendOTP: (otpToken) => authService.resendOTP(otpToken),
 
   logout: () => {
     localStorage.removeItem('adminToken');

@@ -84,7 +84,7 @@ function ExternalTransferPage() {
 
   const handleDone = () => {
     fetchAccounts();
-    navigate('/pay-transfer');
+    navigate('/pay-transfer', { replace: true });
   };
 
   // ── Success screen ────────────────────────────────────────────────

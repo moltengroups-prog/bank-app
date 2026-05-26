@@ -269,3 +269,25 @@ export const ROUTING_NUMBERS = [
   '051405515', // Capital One
   '121000248', // Wells Fargo
 ];
+
+export const LOCATIONS = [
+  ['ATLANTA', 'GA'], ['DECATUR', 'GA'], ['MARIETTA', 'GA'],
+  ['STOCKBRIDGE', 'GA'], ['PEACHTREE CITY', 'GA'], ['ALPHARETTA', 'GA'],
+  ['ROSWELL', 'GA'], ['DUNWOODY', 'GA'], ['SANDY SPRINGS', 'GA'],
+  ['NORCROSS', 'GA'], ['SMYRNA', 'GA'], ['LAWRENCEVILLE', 'GA'],
+  ['AUSTIN', 'TX'], ['HOUSTON', 'TX'], ['DALLAS', 'TX'],
+  ['FORT WORTH', 'TX'], ['SAN ANTONIO', 'TX'], ['PLANO', 'TX'],
+  ['MIAMI', 'FL'], ['ORLANDO', 'FL'], ['TAMPA', 'FL'],
+  ['JACKSONVILLE', 'FL'], ['FORT LAUDERDALE', 'FL'], ['BOCA RATON', 'FL'],
+  ['NEW YORK', 'NY'], ['BROOKLYN', 'NY'], ['QUEENS', 'NY'],
+  ['BRONX', 'NY'], ['FLUSHING', 'NY'], ['YONKERS', 'NY'],
+  ['LOS ANGELES', 'CA'], ['SAN FRANCISCO', 'CA'], ['OAKLAND', 'CA'],
+  ['SAN DIEGO', 'CA'], ['SACRAMENTO', 'CA'], ['PASADENA', 'CA'],
+  ['CHICAGO', 'IL'], ['NAPERVILLE', 'IL'], ['EVANSTON', 'IL'],
+  ['CHARLOTTE', 'NC'], ['RALEIGH', 'NC'], ['DURHAM', 'NC'],
+  ['PHOENIX', 'AZ'], ['SCOTTSDALE', 'AZ'], ['TEMPE', 'AZ'],
+  ['SEATTLE', 'WA'], ['BELLEVUE', 'WA'], ['TACOMA', 'WA'],
+  ['DENVER', 'CO'], ['AURORA', 'CO'], ['BOULDER', 'CO'],
+  ['NASHVILLE', 'TN'], ['MEMPHIS', 'TN'], ['KNOXVILLE', 'TN'],
+  ['RICHMOND', 'VA'], ['ARLINGTON', 'VA'], ['ALEXANDRIA', 'VA'],
+];

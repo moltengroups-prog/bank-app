@@ -1,10 +1,13 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import AdminSidebar from '../../components/AdminSidebar.jsx';
 import { useSidebarStore } from '../../store/sidebarStore.js';
 
-const ADMIN_ROLES = ['admin', 'support-agent'];
+const ADMIN_ROLES      = ['admin', 'support-agent'];
+const INACTIVITY_MS    = 3 * 60 * 1000;
+const ACTIVITY_KEY     = 'bom-admin-last-activity';
+const ACTIVITY_EVENTS  = ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll'];
 
 function readAuth() {
   const token = localStorage.getItem('adminToken');
@@ -24,6 +27,38 @@ export default function AdminLayout({ children }) {
 
   const isPublic = pathname === '/admin/login';
   const [ready, setReady] = useState(false);
+  const timerRef = useRef(null);
+
+  const doLogout = useCallback(() => {
+    localStorage.removeItem('adminToken');
+    localStorage.removeItem('adminUser');
+    router.replace('/admin/login?expired=1');
+  }, [router]);
+
+  const resetTimer = useCallback(() => {
+    localStorage.setItem(ACTIVITY_KEY, Date.now().toString());
+    clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(doLogout, INACTIVITY_MS);
+  }, [doLogout]);
+
+  // Inactivity timeout — only runs on authenticated pages
+  useEffect(() => {
+    if (isPublic || !ready) return;
+    resetTimer();
+    ACTIVITY_EVENTS.forEach((ev) => window.addEventListener(ev, resetTimer, { passive: true }));
+    const handleStorage = (e) => {
+      if (e.key !== ACTIVITY_KEY) return;
+      const remaining = INACTIVITY_MS - (Date.now() - parseInt(e.newValue || '0', 10));
+      clearTimeout(timerRef.current);
+      timerRef.current = setTimeout(doLogout, Math.max(0, remaining));
+    };
+    window.addEventListener('storage', handleStorage);
+    return () => {
+      clearTimeout(timerRef.current);
+      ACTIVITY_EVENTS.forEach((ev) => window.removeEventListener(ev, resetTimer));
+      window.removeEventListener('storage', handleStorage);
+    };
+  }, [isPublic, ready, resetTimer, doLogout]);
 
   useEffect(() => {
     if (isPublic) return;

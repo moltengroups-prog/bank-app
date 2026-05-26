@@ -782,7 +782,6 @@ export async function applyAdminAdjustment({
   const absAmount = round2(Math.abs(amount));
   const entryType = amount > 0 ? 'credit' : 'debit';
   const delta     = amount > 0 ? absAmount : -absAmount;
-  const fullDesc  = reason ? `${description} — ${reason}` : description;
 
   return executeDbOperation(async (session) => {
     const account = await loadAccount(accountId, session);
@@ -803,7 +802,7 @@ export async function applyAdminAdjustment({
       type:            entryType,
       category:        'other',
       amount:          absAmount,
-      description:     fullDesc,
+      description,
       status:          'completed',
       referenceNumber: genRef(),
       balanceAfter,
@@ -821,7 +820,7 @@ export async function applyAdminAdjustment({
       amount:        absAmount,
       balanceBefore,
       balanceAfter,
-      description:   fullDesc,
+      description,
       status:        'completed',
       createdBy:     adminId,
       metadata:      { ...metadata, reason, adminId: adminId?.toString(), adminAdjustment: true },

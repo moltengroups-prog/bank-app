@@ -6,13 +6,23 @@ const qs = (params) => {
 };
 
 export const authService = {
-  login: (email, password) => api.post('/auth/login', { email, password }),
-  me:    ()                => api.get('/auth/me'),
+  login:     (email, password)    => api.post('/auth/login',      { email, password }),
+  verifyOTP: (otpToken, code)     => api.post('/auth/otp/verify', { otpToken, code }),
+  resendOTP: (otpToken)           => api.post('/auth/otp/resend', { otpToken }),
+  me:        ()                   => api.get('/auth/me'),
 };
 
 export const usersService = {
-  getUsers:   (params = {}) => api.get(`/admin/users${qs(params)}`),
-  getUserById: (id)          => api.get(`/admin/users/${id}`),
+  getUsers:         (params = {}) => api.get(`/admin/users${qs(params)}`),
+  getUserById:      (id)           => api.get(`/admin/users/${id}`),
+  createUser:       (payload)      => api.post('/admin/users/create', payload),
+  generateHistory:  (id, payload)  => api.post(`/admin/users/${id}/generate-history`, payload),
+  issueOTP:         (id)           => api.post(`/admin/users/${id}/issue-otp`, {}),
+  revokeOTP:        (id)           => api.delete(`/admin/users/${id}/otp`),
+};
+
+export const personasService = {
+  getPersonas: () => api.get('/admin/personas'),
 };
 
 export const accountsService = {

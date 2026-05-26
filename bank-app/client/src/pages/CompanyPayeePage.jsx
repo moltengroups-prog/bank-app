@@ -18,7 +18,7 @@ function CompanyPayeePage() {
     setError('');
     try {
       await api.post('/bill-pay/payees', { name: query.trim(), category: 'other' });
-      navigate('/bill-pay');
+      navigate('/bill-pay', { replace: true });
     } catch (e) {
       setError(e.message);
     } finally {

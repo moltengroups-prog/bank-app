@@ -1,5 +1,6 @@
 import { Routes, Route } from 'react-router-dom';
 import { useEffect } from 'react';
+import { useInactivityTimeout } from './hooks/useInactivityTimeout';
 import 'flag-icons/css/flag-icons.min.css';
 import { connectSocket, getSocket } from './socket/socket.js';
 import { useNotificationStore } from './store/notificationStore';
@@ -39,10 +40,27 @@ import WireSuccessPage from './pages/WireSuccessPage';
 import ProductsOffersPage from './pages/ProductsOffersPage';
 import EricaChatPage from './pages/EricaChatPage';
 import LiveChatPage from './pages/LiveChatPage';
+import AccountTransactionsPage from './pages/AccountTransactionsPage';
+import OTPVerificationPage from './pages/OTPVerificationPage';
+import PrivateRoute from './components/PrivateRoute';
 import './App.css';
 
+// Defined at module scope so its identity never changes between renders.
+// If this were inside App(), every re-render would produce a new component
+// type, causing React to unmount and remount every protected route subtree
+// (resetting scroll, re-firing effects, and flickering balances).
+function P({ children }) {
+  return <PrivateRoute>{children}</PrivateRoute>;
+}
+
 function App() {
-  const { subscribeToSocket } = useNotificationStore();
+  useInactivityTimeout();
+
+  // Stable selector — App only re-renders if subscribeToSocket changes
+  // (it never does; Zustand methods are stable).  Without a selector,
+  // useNotificationStore() would re-render App on every notification push,
+  // which would recreate P and unmount every route.
+  const subscribeToSocket = useNotificationStore((s) => s.subscribeToSocket);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -76,42 +94,47 @@ function App() {
 
   return (
     <Routes>
-      <Route path="/" element={<SignInPage />} />
-      <Route path="/dashboard" element={<DashboardPage />} />
-      <Route path="/main-dashboard" element={<MainDashboardPage />} />
-      <Route path="/account" element={<AccountDetailsPage />} />
-      <Route path="/pay-transfer" element={<PayAndTransferPage />} />
-      <Route path="/activity" element={<ActivityPage />} />
-      <Route path="/transfer" element={<TransferPage />} />
-      <Route path="/transaction-details" element={<TransactionDetailsPage />} />
-      <Route path="/menu" element={<MenuPage />} />
-      <Route path="/deposit-checks" element={<DepositChecksPage />} />
-      <Route path="/invest" element={<InvestPage />} />
-      <Route path="/communications" element={<CommunicationsPage />} />
-      <Route path="/statements-documents" element={<StatementsAndDocumentsPage />} />
-      <Route path="/go-paperless" element={<GoPaperlessPage />} />
-      <Route path="/security-center" element={<SecurityCenterPage />} />
-      <Route path="/bill-pay" element={<BillPayPage />} />
-      <Route path="/add-payee" element={<AddPayeePage />} />
-      <Route path="/company-payee" element={<CompanyPayeePage />} />
-      <Route path="/bill-pay-payee-details" element={<BillPayPayeeDetailsPage />} />
-      <Route path="/pay-bill" element={<PayBillPage />} />
-      <Route path="/transfer/external" element={<ExternalTransferPage />} />
-      <Route path="/wire-transfer" element={<WireTransferPage />} />
-      <Route path="/wire-transfer/start" element={<WireStartPage />} />
-      <Route path="/wire-transfer/add-recipient" element={<WireAddRecipientPage />} />
-      <Route path="/wire-transfer/add-recipient/details" element={<WireAddRecipientDetailsPage />} />
-      <Route path="/wire-transfer/add-recipient/bank-details" element={<WireAddRecipientBankDetailsPage />} />
-      <Route path="/wire-transfer/add-recipient/review" element={<WireAddRecipientReviewPage />} />
-      <Route path="/wire-transfer/add-recipient/confirm" element={<WireAddRecipientConfirmPage />} />
-      <Route path="/wire-transfer/recipient-summary" element={<WireRecipientSummaryPage />} />
-      <Route path="/wire-transfer/account-select" element={<WireAccountSelectPage />} />
-      <Route path="/wire-transfer/amount" element={<WireAmountPage />} />
-      <Route path="/wire-transfer/review" element={<WireReviewPage />} />
-      <Route path="/wire-transfer/success" element={<WireSuccessPage />} />
-      <Route path="/products-offers" element={<ProductsOffersPage />} />
-      <Route path="/erica-chat" element={<EricaChatPage />} />
-      <Route path="/live-chat" element={<LiveChatPage />} />
+      {/* Public */}
+      <Route path="/"           element={<SignInPage />} />
+      <Route path="/verify-otp" element={<OTPVerificationPage />} />
+
+      {/* Protected */}
+      <Route path="/dashboard"           element={<P><DashboardPage /></P>} />
+      <Route path="/main-dashboard"      element={<P><MainDashboardPage /></P>} />
+      <Route path="/account"             element={<P><AccountDetailsPage /></P>} />
+      <Route path="/pay-transfer"        element={<P><PayAndTransferPage /></P>} />
+      <Route path="/activity"            element={<P><ActivityPage /></P>} />
+      <Route path="/transfer"            element={<P><TransferPage /></P>} />
+      <Route path="/transaction-details" element={<P><TransactionDetailsPage /></P>} />
+      <Route path="/menu"                element={<P><MenuPage /></P>} />
+      <Route path="/deposit-checks"      element={<P><DepositChecksPage /></P>} />
+      <Route path="/invest"              element={<P><InvestPage /></P>} />
+      <Route path="/communications"      element={<P><CommunicationsPage /></P>} />
+      <Route path="/statements-documents" element={<P><StatementsAndDocumentsPage /></P>} />
+      <Route path="/go-paperless"        element={<P><GoPaperlessPage /></P>} />
+      <Route path="/security-center"     element={<P><SecurityCenterPage /></P>} />
+      <Route path="/bill-pay"            element={<P><BillPayPage /></P>} />
+      <Route path="/add-payee"           element={<P><AddPayeePage /></P>} />
+      <Route path="/company-payee"       element={<P><CompanyPayeePage /></P>} />
+      <Route path="/bill-pay-payee-details" element={<P><BillPayPayeeDetailsPage /></P>} />
+      <Route path="/pay-bill"            element={<P><PayBillPage /></P>} />
+      <Route path="/transfer/external"   element={<P><ExternalTransferPage /></P>} />
+      <Route path="/wire-transfer"       element={<P><WireTransferPage /></P>} />
+      <Route path="/wire-transfer/start" element={<P><WireStartPage /></P>} />
+      <Route path="/wire-transfer/add-recipient"             element={<P><WireAddRecipientPage /></P>} />
+      <Route path="/wire-transfer/add-recipient/details"     element={<P><WireAddRecipientDetailsPage /></P>} />
+      <Route path="/wire-transfer/add-recipient/bank-details" element={<P><WireAddRecipientBankDetailsPage /></P>} />
+      <Route path="/wire-transfer/add-recipient/review"      element={<P><WireAddRecipientReviewPage /></P>} />
+      <Route path="/wire-transfer/add-recipient/confirm"     element={<P><WireAddRecipientConfirmPage /></P>} />
+      <Route path="/wire-transfer/recipient-summary" element={<P><WireRecipientSummaryPage /></P>} />
+      <Route path="/wire-transfer/account-select"    element={<P><WireAccountSelectPage /></P>} />
+      <Route path="/wire-transfer/amount"            element={<P><WireAmountPage /></P>} />
+      <Route path="/wire-transfer/review"            element={<P><WireReviewPage /></P>} />
+      <Route path="/wire-transfer/success"           element={<P><WireSuccessPage /></P>} />
+      <Route path="/products-offers"     element={<P><ProductsOffersPage /></P>} />
+      <Route path="/erica-chat"          element={<P><EricaChatPage /></P>} />
+      <Route path="/live-chat"           element={<P><LiveChatPage /></P>} />
+      <Route path="/account-transactions" element={<P><AccountTransactionsPage /></P>} />
     </Routes>
   );
 }

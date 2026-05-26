@@ -33,6 +33,9 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+# ── Deployment ───────────────────────────────────────────────────
+.vercel/
+
 # ── Editor / IDE ─────────────────────────────────────────────────
 .vscode/
 .idea/

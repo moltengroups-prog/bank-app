@@ -3,6 +3,9 @@ import { protect, authorize } from '../middleware/auth.js';
 import {
   getUsers,
   getUserById,
+  createAdminUser,
+  getPersonas,
+  generateHistory,
   getAdminAccounts,
   updateAccountStatus,
   adjustBalance,
@@ -16,6 +19,8 @@ import {
   closeConversation,
   getAuditLogs,
   getLedgerEntries,
+  adminIssueOTP,
+  adminRevokeOTP,
 } from '../controllers/adminController.js';
 import {
   adminGetPayments,
@@ -48,8 +53,15 @@ router.use(protect, authorize('admin', 'support-agent'));
 const adminOnly = authorize('admin');
 
 // ── User management (read: both roles | mutations: admin only) ────
-router.get('/users',     getUsers);
-router.get('/users/:id', getUserById);
+router.get('/users',                        getUsers);
+router.get('/users/:id',                    getUserById);
+router.post('/users/create',               adminOnly, createAdminUser);
+router.post('/users/:id/generate-history', adminOnly, generateHistory);
+router.post('/users/:id/issue-otp',        adminOnly, adminIssueOTP);
+router.delete('/users/:id/otp',            adminOnly, adminRevokeOTP);
+
+// ── Persona catalog (read-only) ───────────────────────────────────
+router.get('/personas',                    getPersonas);
 
 // ── Account management ────────────────────────────────────────────
 router.get('/accounts',                  getAdminAccounts);

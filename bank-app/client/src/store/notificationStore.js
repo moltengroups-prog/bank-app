@@ -12,16 +12,15 @@ export const useNotificationStore = create((set, get) => ({
     if (!socket) return;
 
     const handler = (notification) => {
-      set((state) => {
-        // Deduplicate — ignore if we already have this notification
-        if (state.notifications.some((n) => String(n.id) === String(notification.id))) {
-          return { unreadCount: state.unreadCount };
-        }
-        return {
-          notifications: [notification, ...state.notifications],
-          unreadCount:   state.unreadCount + 1,
-        };
-      });
+      // Check before calling set() so duplicate notifications never trigger
+      // a state update (even a no-op set() creates a new state object and
+      // fires all store subscribers, causing unnecessary re-renders).
+      if (get().notifications.some((n) => String(n.id) === String(notification.id))) return;
+
+      set((state) => ({
+        notifications: [notification, ...state.notifications],
+        unreadCount:   state.unreadCount + 1,
+      }));
     };
 
     socket.on('notification:new', handler);

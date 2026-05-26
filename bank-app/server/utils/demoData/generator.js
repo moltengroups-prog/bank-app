@@ -5,6 +5,13 @@ import {
   UTILITIES, AIRLINES, HOTELS, TRANSPORT, HEALTHCARE,
   FUEL, ZELLE_CONTACTS, BUSINESS_VENDORS, ROUTING_NUMBERS,
 } from './merchants.js';
+import {
+  achPayroll, achGrocery, achDining, achShopping, achATM,
+  achZelleOut, achZelleIn, achTransferOut, achSubscription,
+  achUtility, achFuel, achAirline, achHotel, achTransport,
+  achHealthcare, achWireOut, achWireIn, achMortgage, achRent,
+  achSavingsTransfer, achInterest,
+} from './achFormat.js';
 
 // ── Helpers ────────────────────────────────────────────────────────
 const rand  = (min, max) => Math.random() * (max - min) + min;
@@ -118,7 +125,7 @@ export function generateTransactions(userId, accountId, userType, targetBalance)
         type:       'credit',
         category:   'payroll',
         amount:     round2(payAmount * rand(0.96, 1.04)),
-        description: payDesc,
+        description: achPayroll(employer, d),
         merchant:   employer,
       });
     }
@@ -130,7 +137,7 @@ export function generateTransactions(userId, accountId, userType, targetBalance)
         type:       'credit',
         category:   'payroll',
         amount:     round2(payAmount * rand(0.95, 1.05)),
-        description: payDesc,
+        description: achPayroll(employer, d),
         merchant:   employer,
       });
     }
@@ -140,13 +147,14 @@ export function generateTransactions(userId, accountId, userType, targetBalance)
   if (pattern.housing) {
     const h = pattern.housing;
     const housingAmt = round2(rand(h.amountMin, h.amountMax));
+    const isMortgage = h.description?.toLowerCase().includes('mortgage');
     for (const d of eachMonth(START, END, h.dayOfMonth)) {
       events.push({
         transactionDate: setHour(d, 8, 0),
         type:       'debit',
         category:   'transfer',
         amount:     round2(housingAmt * rand(0.998, 1.002)),
-        description: h.description,
+        description: isMortgage ? achMortgage() : achRent(d),
         merchant:   h.merchant,
       });
     }
@@ -160,7 +168,7 @@ export function generateTransactions(userId, accountId, userType, targetBalance)
         type:       'debit',
         category:   'subscription',
         amount:     round2(sub.amount * rand(0.99, 1.01)),
-        description: sub.desc || `${sub.name} Monthly`,
+        description: achSubscription(sub.desc || sub.name, d),
         merchant:   sub.name,
       });
     }
@@ -175,7 +183,7 @@ export function generateTransactions(userId, accountId, userType, targetBalance)
         type:       'debit',
         category:   'utilities',
         amount:     round2(rand(util.min, util.max)),
-        description: `${util.name} - Monthly Bill`,
+        description: achUtility(util.name, d),
         merchant:   util.name,
       });
     }
@@ -188,13 +196,15 @@ export function generateTransactions(userId, accountId, userType, targetBalance)
       const d = addDays(week, groceryDay);
       if (d > END) break;
       for (let t = 0; t < pattern.groceries.weeklyTrips; t++) {
+        const merchant = pick(GROCERIES);
+        const txDate = businessHour(jitter(d, 1, START, END));
         events.push({
-          transactionDate: businessHour(jitter(d, 1, START, END)),
+          transactionDate: txDate,
           type:       'debit',
           category:   'shopping',
           amount:     round2(rand(pattern.groceries.amountMin, pattern.groceries.amountMax)),
-          description: 'Grocery Purchase',
-          merchant:   pick(GROCERIES),
+          description: achGrocery(merchant, txDate),
+          merchant,
         });
       }
     }
@@ -204,20 +214,21 @@ export function generateTransactions(userId, accountId, userType, targetBalance)
   const diningPool = DINING[pattern.dining.tier] ?? DINING.standard;
   const diningDaysPerWeek = pattern.dining.weeklyTrips;
   for (const week of eachWeek(START, END)) {
-    // Pick random days in this week for dining
     const days = Array.from({ length: 7 }, (_, i) => i)
       .sort(() => Math.random() - 0.5)
       .slice(0, diningDaysPerWeek);
     for (const offset of days) {
       const d = addDays(week, offset);
       if (d > END) break;
+      const merchant = pick(diningPool);
+      const txDate = eveHour(d);
       events.push({
-        transactionDate: eveHour(d),
+        transactionDate: txDate,
         type:       'debit',
         category:   'dining',
         amount:     round2(rand(pattern.dining.amountMin, pattern.dining.amountMax)),
-        description: 'Restaurant / Food',
-        merchant:   pick(diningPool),
+        description: achDining(merchant, txDate),
+        merchant,
       });
     }
   }
@@ -229,13 +240,15 @@ export function generateTransactions(userId, accountId, userType, targetBalance)
       if (Math.random() < pattern.shopping.weeklyChance) {
         const d = addDays(week, randI(0, 6));
         if (d > END) break;
+        const merchant = pick(shoppingPool);
+        const txDate = businessHour(d);
         events.push({
-          transactionDate: businessHour(d),
+          transactionDate: txDate,
           type:       'debit',
           category:   'shopping',
           amount:     round2(rand(pattern.shopping.amountMin, pattern.shopping.amountMax)),
-          description: 'Retail Purchase',
-          merchant:   pick(shoppingPool),
+          description: achShopping(merchant, txDate),
+          merchant,
         });
       }
     }
@@ -246,12 +259,13 @@ export function generateTransactions(userId, accountId, userType, targetBalance)
     for (const d of eachMonth(START, END, 15)) {
       for (let i = 0; i < pattern.atm.monthlyWithdrawals; i++) {
         const day = jitter(d, 7, START, END);
+        const txDate = businessHour(day);
         events.push({
-          transactionDate: businessHour(day),
+          transactionDate: txDate,
           type:       'debit',
           category:   'atm',
           amount:     round2(rand(pattern.atm.amountMin, pattern.atm.amountMax)),
-          description: 'ATM Withdrawal',
+          description: achATM(txDate),
           merchant:   'ATM',
         });
       }
@@ -264,13 +278,15 @@ export function generateTransactions(userId, accountId, userType, targetBalance)
       if (Math.random() < pattern.fuel.weeklyChance) {
         const d = addDays(week, randI(0, 6));
         if (d > END) break;
+        const merchant = pick(FUEL);
+        const txDate = morningHour(d);
         events.push({
-          transactionDate: morningHour(d),
+          transactionDate: txDate,
           type:       'debit',
           category:   'other',
           amount:     round2(rand(pattern.fuel.amountMin, pattern.fuel.amountMax)),
-          description: 'Fuel / Gas',
-          merchant:   pick(FUEL),
+          description: achFuel(merchant, txDate),
+          merchant,
         });
       }
     }
@@ -281,12 +297,13 @@ export function generateTransactions(userId, accountId, userType, targetBalance)
     for (const d of eachMonth(START, END, randI(1, 28))) {
       if (Math.random() < pattern.healthcare.monthlyChance) {
         const hcItem = pick(HEALTHCARE);
+        const txDate = businessHour(d);
         events.push({
-          transactionDate: businessHour(d),
+          transactionDate: txDate,
           type:       'debit',
           category:   'healthcare',
           amount:     round2(rand(hcItem.min, hcItem.max)),
-          description: 'Healthcare / Medical',
+          description: achHealthcare(hcItem.name, txDate),
           merchant:   hcItem.name,
         });
       }
@@ -299,34 +316,33 @@ export function generateTransactions(userId, accountId, userType, targetBalance)
       (END.getFullYear() - 2024) + (END.getMonth() + 1) / 12
     ));
     const hotelTierMap = { economy: 'standard', business: 'premium', first: 'wealthy' };
-    const airlinePool  = AIRLINES;
     const hotelPool    = HOTELS[hotelTierMap[pattern.travel.tier]] ?? HOTELS.standard;
-    const tripCount   = Math.max(1, tripsTotal);
+    const tripCount    = Math.max(1, tripsTotal);
 
     for (let t = 0; t < tripCount; t++) {
-      // Random trip start within the date range
-      const msRange  = END.getTime() - START.getTime();
+      const msRange   = END.getTime() - START.getTime();
       const tripStart = new Date(START.getTime() + Math.random() * msRange * 0.9);
       const tripDays  = randI(3, 10);
+      const airline   = pick(AIRLINES);
+      const txDate    = morningHour(tripStart);
 
-      // Outbound flight
       events.push({
-        transactionDate: morningHour(tripStart),
+        transactionDate: txDate,
         type:       'debit',
         category:   'travel',
         amount:     round2(rand(
           pattern.travel.tier === 'first' ? 1500 : pattern.travel.tier === 'business' ? 600 : 200,
           pattern.travel.tier === 'first' ? 8000 : pattern.travel.tier === 'business' ? 2500 : 700,
         )),
-        description: 'Airfare',
-        merchant:   pick(airlinePool),
+        description: achAirline(airline, txDate),
+        merchant:   airline,
       });
 
-      // Hotel (nightly charges)
       const hotelNights = tripDays - 1;
       for (let n = 0; n < hotelNights; n++) {
         const hotelDay = addDays(tripStart, n + 1);
         if (hotelDay > END) break;
+        const hotel = pick(hotelPool);
         events.push({
           transactionDate: setHour(hotelDay, 12, 0),
           type:       'debit',
@@ -335,23 +351,24 @@ export function generateTransactions(userId, accountId, userType, targetBalance)
             pattern.travel.tier === 'first' ? 400 : pattern.travel.tier === 'business' ? 180 : 80,
             pattern.travel.tier === 'first' ? 1200 : pattern.travel.tier === 'business' ? 450 : 220,
           )),
-          description: 'Hotel Stay',
-          merchant:   pick(hotelPool),
+          description: achHotel(hotel),
+          merchant:   hotel,
         });
       }
 
-      // Ground transport during trip
       const transportCount = randI(2, 5);
       for (let i = 0; i < transportCount; i++) {
         const day = addDays(tripStart, randI(0, tripDays));
         if (day > END) break;
+        const transport = pick(TRANSPORT);
+        const txD = businessHour(day);
         events.push({
-          transactionDate: businessHour(day),
+          transactionDate: txD,
           type:       'debit',
           category:   'travel',
           amount:     round2(rand(8, 60)),
-          description: 'Ground Transportation',
-          merchant:   pick(TRANSPORT),
+          description: achTransport(transport, txD),
+          merchant:   transport,
         });
       }
     }
@@ -362,15 +379,16 @@ export function generateTransactions(userId, accountId, userType, targetBalance)
     for (const d of eachMonth(START, END, 10)) {
       const count = pattern.zelle.monthlyTransfers;
       for (let i = 0; i < count; i++) {
-        const day = jitter(d, 10, START, END);
+        const day     = jitter(d, 10, START, END);
         const contact = pick(ZELLE_CONTACTS);
         const isCredit = Math.random() < 0.35;
+        const txDate  = businessHour(day);
         events.push({
-          transactionDate: businessHour(day),
+          transactionDate: txDate,
           type:       isCredit ? 'credit' : 'debit',
           category:   'zelle',
           amount:     round2(rand(pattern.zelle.amountMin, pattern.zelle.amountMax)),
-          description: isCredit ? `Zelle from ${contact}` : `Zelle to ${contact}`,
+          description: isCredit ? achZelleIn(contact, txDate) : achZelleOut(contact, txDate),
           merchant:   'Zelle',
         });
       }
@@ -383,13 +401,15 @@ export function generateTransactions(userId, accountId, userType, targetBalance)
       const count = pattern.businessPayments.monthlyVendors;
       for (let i = 0; i < count; i++) {
         const day = jitter(d, 8, START, END);
+        const vendor = pick(BUSINESS_VENDORS);
+        const txDate = businessHour(day);
         events.push({
-          transactionDate: businessHour(day),
+          transactionDate: txDate,
           type:       'debit',
           category:   'billpay',
           amount:     round2(rand(pattern.businessPayments.amountMin, pattern.businessPayments.amountMax)),
-          description: 'Vendor Payment',
-          merchant:   pick(BUSINESS_VENDORS),
+          description: achShopping(vendor, txDate),
+          merchant:   vendor,
         });
       }
     }
@@ -405,7 +425,7 @@ export function generateTransactions(userId, accountId, userType, targetBalance)
           type:       isCredit ? 'credit' : 'debit',
           category:   'wire',
           amount:     round2(rand(pattern.wires.amountMin, pattern.wires.amountMax)),
-          description: isCredit ? 'Incoming Wire Transfer' : 'Outgoing Wire Transfer',
+          description: isCredit ? achWireIn() : achWireOut(),
           merchant:   'Wire Transfer',
         });
       }
@@ -416,12 +436,13 @@ export function generateTransactions(userId, accountId, userType, targetBalance)
   if (pattern.transferToSavings && pattern.transferToSavings.monthlyChance > 0) {
     for (const d of eachMonth(START, END, 25)) {
       if (Math.random() < pattern.transferToSavings.monthlyChance) {
+        const txDate = setHour(d, 9, 0);
         events.push({
-          transactionDate: setHour(d, 9, 0),
+          transactionDate: txDate,
           type:       'debit',
           category:   'transfer',
           amount:     round2(rand(pattern.transferToSavings.amountMin, pattern.transferToSavings.amountMax)),
-          description: 'Transfer to Savings',
+          description: achSavingsTransfer(txDate),
           merchant:   'Internal Transfer',
         });
       }
@@ -483,7 +504,7 @@ export function generateSavingsTransactions(userId, accountId, userType, targetB
       type:       'credit',
       category:   'deposit',
       amount:     monthlyInterest,
-      description: 'Interest Credit',
+      description: achInterest(),
       merchant:   'Bank of Molten',
     });
   }
@@ -492,12 +513,13 @@ export function generateSavingsTransactions(userId, accountId, userType, targetB
   if (pattern.transferToSavings && pattern.transferToSavings.monthlyChance > 0) {
     for (const d of eachMonth(START, END, 25)) {
       if (Math.random() < pattern.transferToSavings.monthlyChance) {
+        const txDate = setHour(d, 9, 5);
         events.push({
-          transactionDate: setHour(d, 9, 5),
+          transactionDate: txDate,
           type:       'credit',
           category:   'transfer',
           amount:     round2(rand(pattern.transferToSavings.amountMin, pattern.transferToSavings.amountMax)),
-          description: 'Transfer from Checking',
+          description: achTransferOut(),
           merchant:   'Internal Transfer',
         });
       }
@@ -507,12 +529,13 @@ export function generateSavingsTransactions(userId, accountId, userType, targetB
   // Occasional withdrawals from savings
   for (const d of eachMonth(START, END, 15)) {
     if (Math.random() < 0.15) {
+      const txDate = businessHour(d);
       events.push({
-        transactionDate: businessHour(d),
+        transactionDate: txDate,
         type:       'debit',
         category:   'transfer',
         amount:     round2(rand(200, 2000) * (userType === 'wealthy' ? 10 : userType === 'premium' ? 3 : 1)),
-        description: 'Transfer to Checking',
+        description: achTransferOut(),
         merchant:   'Internal Transfer',
       });
     }

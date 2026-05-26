@@ -86,7 +86,7 @@ function TransferPage() {
 
   const handleDone = () => {
     fetchAccounts(); // refresh balances in background
-    navigate('/pay-transfer');
+    navigate('/pay-transfer', { replace: true });
   };
 
   // ── Success / confirmation screen ─────────────────────────────────

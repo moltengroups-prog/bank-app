@@ -70,7 +70,7 @@ export default function BillPayPayeeDetailsPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Failed to save payee');
-      navigate('/bill-pay');
+      navigate('/bill-pay', { replace: true });
     } catch (e) {
       setError(e.message);
     } finally {

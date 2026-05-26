@@ -14,7 +14,10 @@ import imgLowes from '../assets/images/logo-lowes.png';
 import imgUlta from '../assets/images/logo-ulta.png';
 import { useDashboardStore } from '../store/dashboardStore';
 import { useAuthStore } from '../store/authStore';
+import { useNotificationStore } from '../store/notificationStore';
 import { formatBalance } from '../utils/format';
+import { onNewNotification } from '../socket/notificationSocket';
+import { getSocket } from '../socket/socket';
 
 const deals = [
   { logo: imgAdidas, name: 'Adidas',      cashback: '5% Cash Back' },
@@ -35,12 +38,44 @@ function DashboardPage() {
   const navigate = useNavigate();
   const [bankingOpen, setBankingOpen] = useState(true);
 
-  const { accounts, loadingAccounts, fetchAccounts } = useDashboardStore();
-  const user = useAuthStore((s) => s.user);
+  // Granular selectors — component only re-renders when these specific fields change,
+  // not when unrelated store fields (e.g. loadingTransactions) update.
+  const accounts        = useDashboardStore((s) => s.accounts);
+  const loadingAccounts = useDashboardStore((s) => s.loadingAccounts);
+  const fetchAccounts   = useDashboardStore((s) => s.fetchAccounts);
+  const refreshAccounts = useDashboardStore((s) => s.refreshAccounts);
+  const user            = useAuthStore((s) => s.user);
+  const unreadCount     = useNotificationStore((s) => s.unreadCount);
+  const fetchUnreadCount = useNotificationStore((s) => s.fetchUnreadCount);
 
   useEffect(() => {
     fetchAccounts();
-  }, [fetchAccounts]);
+    fetchUnreadCount();
+  // Zustand methods are stable references — safe to list as deps
+  }, [fetchAccounts, fetchUnreadCount]);
+
+  // Silent refresh on transfer notification — avoids loading skeleton flicker
+  useEffect(() => {
+    return onNewNotification((n) => {
+      if (n.category === 'transfer') refreshAccounts();
+    });
+  }, [refreshAccounts]);
+
+  // Direct balance update from admin adjustments and wire settlements
+  useEffect(() => {
+    const s = getSocket();
+    if (!s) return;
+    const onBalanceUpdated = () => refreshAccounts();
+    const onWireSettled    = () => refreshAccounts();
+    s.on('balance:updated', onBalanceUpdated);
+    s.on('wire:settled',    onWireSettled);
+    return () => {
+      s.off('balance:updated', onBalanceUpdated);
+      s.off('wire:settled',    onWireSettled);
+    };
+  // getSocket() returns a module-level singleton; no deps needed
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [refreshAccounts]);
 
   return (
     <div className="flex flex-col h-screen bg-gray-100 font-sans">
@@ -48,7 +83,7 @@ function DashboardPage() {
       <AppHeader
         showMenuButton
         showInbox
-        inboxCount={1}
+        inboxCount={unreadCount}
         showProducts
         showLogout
         iconGap={5}

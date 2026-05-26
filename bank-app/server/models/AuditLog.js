@@ -58,6 +58,14 @@ export const AUDIT_ACTIONS = Object.freeze({
   // Account Operations
   STATEMENT_DOWNLOADED:  'account.statement.downloaded',
 
+  // OTP / Authentication events
+  OTP_SENT:              'otp.sent',
+  OTP_VERIFIED:          'otp.verified',
+  OTP_FAILED:            'otp.failed',
+  OTP_RESENT:            'otp.resent',
+  OTP_ADMIN_ISSUED:      'otp.admin.issued',
+  OTP_REVOKED:           'otp.revoked',
+
   // System
   DATA_EXPORT:           'data.export',
 });

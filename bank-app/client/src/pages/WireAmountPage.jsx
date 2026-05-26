@@ -120,7 +120,7 @@ function WireAmountPage() {
       </div>
 
       <WireFlowFooter
-        cancelTo="/wire-transfer/recipient-summary"
+        onCancel={() => navigate(-1)}
         onNext={handleNext}
         nextEnabled={canNext}
       />

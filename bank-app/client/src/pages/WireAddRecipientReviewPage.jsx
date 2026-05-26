@@ -92,7 +92,7 @@ function WireAddRecipientReviewPage() {
       </div>
 
       <WireFlowFooter
-        cancelTo="/wire-transfer/add-recipient/bank-details"
+        onCancel={() => navigate(-1)}
         onNext={handleNext}
         nextEnabled={canNext}
       />

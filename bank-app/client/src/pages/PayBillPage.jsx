@@ -131,7 +131,7 @@ export default function PayBillPage() {
               }
               {isRecurring && ` Repeats ${recurringRule}.`}
             </p>
-            <button onClick={() => navigate('/bill-pay')} className="w-full py-4 bg-[#002D72] text-white font-bold text-sm tracking-widest rounded-full active:opacity-80">
+            <button onClick={() => navigate('/bill-pay', { replace: true })} className="w-full py-4 bg-[#002D72] text-white font-bold text-sm tracking-widest rounded-full active:opacity-80">
               DONE
             </button>
           </div>

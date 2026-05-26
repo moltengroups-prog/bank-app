@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import InsetDivider from '../components/InsetDivider';
 import FdicBanner from '../components/FdicBanner';
 import logo from '../assets/logos/logo.png';
@@ -10,13 +10,29 @@ import imgBonus from '../assets/images/box-bonus.jpeg';
 import { useAuthStore } from '../store/authStore';
 
 function SignInPage() {
+  const [searchParams]          = useSearchParams();
+  const sessionExpired          = searchParams.get('expired') === '1';
   const [touchId,  setTouchId]  = useState(false);
   const [email,    setEmail]    = useState('');
   const [password, setPassword] = useState('');
   const [loading,  setLoading]  = useState(false);
-  const [error,    setError]    = useState('');
+  const [error,    setError]    = useState(sessionExpired ? 'Your session expired due to inactivity.' : '');
   const navigate   = useNavigate();
   const authLogin  = useAuthStore((s) => s.login);
+
+  // Strip ?expired=1 from URL immediately so a manual refresh won't re-show the message
+  useEffect(() => {
+    if (sessionExpired) {
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Auto-dismiss the session-expiry banner after 6 seconds
+  useEffect(() => {
+    if (!error) return;
+    const id = setTimeout(() => setError(''), 6000);
+    return () => clearTimeout(id);
+  }, [error]);
 
   async function handleLogin() {
     if (!email || !password) {
@@ -26,7 +42,11 @@ function SignInPage() {
     setLoading(true);
     setError('');
     try {
-      await authLogin(email, password);
+      const data = await authLogin(email, password);
+      if (data?.requiresOTP) {
+        navigate('/verify-otp', { state: { otpToken: data.otpToken, email } });
+        return;
+      }
       navigate('/dashboard');
     } catch (err) {
       setError(err.message || 'Invalid credentials. Please try again.');

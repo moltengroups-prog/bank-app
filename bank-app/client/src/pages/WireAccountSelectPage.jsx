@@ -147,7 +147,7 @@ function WireAccountSelectPage() {
       </div>
 
       <WireFlowFooter
-        cancelTo="/wire-transfer/recipient-summary"
+        onCancel={() => navigate(-1)}
         onNext={() => navigate('/wire-transfer/recipient-summary')}
         nextEnabled={canNext}
         nextLabel="SELECT"

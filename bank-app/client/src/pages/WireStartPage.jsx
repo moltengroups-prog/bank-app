@@ -150,7 +150,7 @@ function WireStartPage() {
       </div>
 
       <WireFlowFooter
-        cancelTo="/pay-transfer"
+        onCancel={() => navigate('/pay-transfer')}
         onNext={() => navigate('/wire-transfer/recipient-summary')}
         nextEnabled={hasRecipient}
       />

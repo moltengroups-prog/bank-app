@@ -9,6 +9,7 @@ import { useDashboardStore } from '../store/dashboardStore';
 import { dashboardService } from '../services/dashboardService';
 import { api } from '../services/api';
 import { toActivityDetailPayload } from '../utils/format';
+import { onNewNotification } from '../socket/notificationSocket';
 
 const fmtDate = (d) => new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 const fmtUSD  = (n) => '$' + Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -72,6 +73,24 @@ function ActivityPage() {
       .catch(() => setScheduled([]))
       .finally(() => setLoadingScheduled(false));
   }, [fetchAccounts]);
+
+  // Re-fetch transaction list when a transfer notification arrives (incoming cross-user transfer)
+  useEffect(() => {
+    return onNewNotification((n) => {
+      if (n.category === 'transfer') {
+        setLoadingTxs(true);
+        const params = { limit: 100 };
+        if (filterAccountId) params.accountId = filterAccountId;
+        if (searchQuery)     params.search     = searchQuery;
+        dashboardService
+          .getTransactions(params)
+          .then((res) => setAllTxs(res?.data || []))
+          .catch(() => {})
+          .finally(() => setLoadingTxs(false));
+      }
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filterAccountId, searchQuery]);
 
   // Debounce search input → searchQuery (400ms)
   useEffect(() => {

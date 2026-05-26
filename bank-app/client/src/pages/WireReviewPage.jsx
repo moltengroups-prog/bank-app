@@ -177,7 +177,7 @@ function WireReviewPage() {
         <div className="flex gap-3">
           <button
             type="button"
-            onClick={() => navigate('/wire-transfer/amount')}
+            onClick={() => navigate(-1)}
             className="flex-1 py-4 bg-white border-2 border-[#002D72] text-[#002D72] font-bold text-sm tracking-widest rounded-full active:bg-gray-50"
           >
             BACK

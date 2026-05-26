@@ -28,8 +28,15 @@ function DashCard({ children, onClick }) {
 
 function MainDashboardPage() {
   const navigate     = useNavigate();
-  const { accounts, transactions, loadingAccounts, loadingTransactions, fetchAccounts, fetchTransactions } = useDashboardStore();
-  const { unreadCount, fetchUnreadCount } = useNotificationStore();
+  // Granular selectors prevent re-renders from unrelated store field changes
+  const accounts             = useDashboardStore((s) => s.accounts);
+  const transactions         = useDashboardStore((s) => s.transactions);
+  const loadingAccounts      = useDashboardStore((s) => s.loadingAccounts);
+  const loadingTransactions  = useDashboardStore((s) => s.loadingTransactions);
+  const fetchAccounts        = useDashboardStore((s) => s.fetchAccounts);
+  const fetchTransactions    = useDashboardStore((s) => s.fetchTransactions);
+  const unreadCount          = useNotificationStore((s) => s.unreadCount);
+  const fetchUnreadCount     = useNotificationStore((s) => s.fetchUnreadCount);
   const checking     = accounts.find((a) => a.accountType === 'checking') || accounts[0] || null;
 
   useEffect(() => {
@@ -42,23 +49,35 @@ function MainDashboardPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Average monthly spend: sum all debit amounts grouped by calendar month, then average
-  const avgMonthlySpend = useMemo(() => {
+  const spendingStats = useMemo(() => {
+    // Exclude admin-generated adjustments and internal system credits
     const debits = transactions.filter(
-      (t) => t.transactionType === 'debit' || t.amount < 0
+      (t) => t.type === 'debit' && !t.metadata?.adminAdjustment
     );
     if (debits.length === 0) return null;
 
+    // Monthly averages
     const byMonth = {};
     debits.forEach((t) => {
-      const d = new Date(t.date || t.createdAt);
+      const d   = new Date(t.transactionDate || t.createdAt);
       const key = `${d.getFullYear()}-${d.getMonth()}`;
-      const amt = Math.abs(t.amount);
-      byMonth[key] = (byMonth[key] || 0) + amt;
+      byMonth[key] = (byMonth[key] || 0) + t.amount;
     });
+    const monthTotals   = Object.values(byMonth);
+    const avgMonthly    = Math.round(monthTotals.reduce((s, v) => s + v, 0) / monthTotals.length);
 
-    const monthTotals = Object.values(byMonth);
-    return Math.round(monthTotals.reduce((s, v) => s + v, 0) / monthTotals.length);
+    // Weekly average (divide monthly by 4.33)
+    const avgWeekly = Math.round(avgMonthly / 4.33);
+
+    // Top spending category
+    const byCat = {};
+    debits.forEach((t) => {
+      const cat = t.category || 'other';
+      byCat[cat] = (byCat[cat] || 0) + t.amount;
+    });
+    const topCategory = Object.entries(byCat).sort((a, b) => b[1] - a[1])[0]?.[0] || null;
+
+    return { avgMonthly, avgWeekly, topCategory };
   }, [transactions]);
 
   return (
@@ -69,7 +88,7 @@ function MainDashboardPage() {
         showEricaInline
         ericaInlineCount={2}
         showInbox
-        inboxCount={1}
+        inboxCount={unreadCount}
         showProducts
         showLogout
         iconGap={3}
@@ -109,7 +128,7 @@ function MainDashboardPage() {
             <img
               src={imgAvgSpend}
               alt="Average spending chart"
-              className="w-20 h-14 object-contain mb-3"
+              className="w-20 h-14 object-contain mb-2"
             />
             <p className="text-gray-500 text-xs font-normal leading-snug mb-1">
               On Average You Spend
@@ -118,12 +137,15 @@ function MainDashboardPage() {
               <span className="text-gray-300 text-2xl font-bold animate-pulse">$——</span>
             ) : (
               <p className="text-gray-900 text-2xl font-bold leading-tight">
-                {avgMonthlySpend != null ? `$${avgMonthlySpend.toLocaleString()}` : '—'}
+                {spendingStats ? `$${spendingStats.avgMonthly.toLocaleString()}` : '—'}
               </p>
             )}
-            <p className="text-gray-400 text-xs font-normal mt-1 leading-snug">
-              Per Month
-            </p>
+            <p className="text-gray-400 text-xs font-normal mt-0.5 leading-snug">Per Month</p>
+            {spendingStats?.topCategory && !loadingTransactions && (
+              <p className="text-gray-400 text-[10px] mt-1 leading-snug capitalize">
+                Top: {spendingStats.topCategory}
+              </p>
+            )}
           </DashCard>
 
           {/* Card 3 — BankAmeriDeals (Adidas) */}
@@ -141,7 +163,7 @@ function MainDashboardPage() {
           </DashCard>
 
           {/* Card 4 — Alerts */}
-          <DashCard>
+          <DashCard onClick={() => navigate('/communications')}>
             <div className="relative mb-3">
               <img
                 src={imgAlerts}

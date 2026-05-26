@@ -1,9 +1,22 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Lightbulb } from 'lucide-react';
 import AppHeader from '../components/AppHeader';
 import LegalDisclosure from '../components/LegalDisclosure';
 import imgHero from '../assets/images/wire-transfer-hero.jpg';
+import { api } from '../services/api';
+import { getSocket } from '../socket/socket';
+
+const fmtUSD = (n) => '$' + Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const fmtDate = (d) => new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+const STATUS_STYLES = {
+  processing:     'text-blue-600 bg-blue-50',
+  completed:      'text-green-700 bg-green-50',
+  'pending-review':'text-amber-700 bg-amber-50',
+  rejected:       'text-red-700 bg-red-50',
+  blocked:        'text-red-700 bg-red-50',
+};
 
 // ── Mock data ────────────────────────────────────────────────────
 
@@ -35,6 +48,27 @@ function CurrencyCard({ countryCode, country, code }) {
 
 function WireTransferPage() {
   const navigate = useNavigate();
+  const [recentWires,   setRecentWires]   = useState([]);
+  const [loadingWires,  setLoadingWires]  = useState(true);
+
+  const fetchWires = () => {
+    api.get('/wire-transfers?limit=5')
+      .then((res) => setRecentWires(res?.data || []))
+      .catch(() => setRecentWires([]))
+      .finally(() => setLoadingWires(false));
+  };
+
+  useEffect(() => {
+    fetchWires();
+  }, []);
+
+  // Refresh when a wire settles so status updates immediately
+  useEffect(() => {
+    const s = getSocket();
+    if (!s) return;
+    s.on('wire:settled', fetchWires);
+    return () => s.off('wire:settled', fetchWires);
+  }, []);
 
   return (
     <div className="flex flex-col min-h-screen bg-white font-sans">
@@ -103,6 +137,42 @@ function WireTransferPage() {
             </button>
           </div>
         </div>
+
+        {/* ── Recent Wires ── */}
+        {(loadingWires || recentWires.length > 0) && (
+          <div className="bg-white px-4 py-6 border-t border-gray-200">
+            <h2 className="text-[17px] font-bold text-gray-900 mb-4">Recent wire transfers</h2>
+            {loadingWires ? (
+              <div className="space-y-3">
+                {[1, 2].map((n) => (
+                  <div key={n} className="h-14 bg-gray-100 rounded-xl animate-pulse" />
+                ))}
+              </div>
+            ) : (
+              <ul className="space-y-3">
+                {recentWires.map((wire) => {
+                  const rName = [wire.recipient?.firstName, wire.recipient?.lastName, wire.recipient?.businessName]
+                    .filter(Boolean).join(' ') || wire.recipient?.nickname || 'Recipient';
+                  const statusStyle = STATUS_STYLES[wire.status] || 'text-gray-600 bg-gray-50';
+                  return (
+                    <li key={wire._id} className="flex items-center justify-between gap-3 py-2 border-b border-gray-100 last:border-0">
+                      <div className="min-w-0">
+                        <p className="text-[14px] font-semibold text-gray-900 truncate">{rName}</p>
+                        <p className="text-[12px] text-gray-400">{fmtDate(wire.submittedAt || wire.createdAt)}</p>
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full capitalize ${statusStyle}`}>
+                          {wire.status?.replace('-', ' ')}
+                        </span>
+                        <span className="text-[14px] font-bold text-gray-800">{fmtUSD(wire.amount)}</span>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
+        )}
 
         <LegalDisclosure />
 

@@ -105,7 +105,7 @@ function WireAddRecipientConfirmPage() {
         accountNumber:    bi.accountNumber ?? '',
       });
       setSelectedRecipient(saved);
-      navigate('/wire-transfer/start');
+      navigate('/wire-transfer/start', { replace: true });
     } catch (err) {
       setError(err.message || 'Failed to add recipient. Please try again.');
       setIsAdding(false);

@@ -99,7 +99,7 @@ function WireAddRecipientDetailsPage() {
       </div>
 
       <WireFlowFooter
-        cancelTo="/wire-transfer/add-recipient"
+        onCancel={() => navigate(-1)}
         onNext={handleNext}
         nextEnabled={canNext}
       />

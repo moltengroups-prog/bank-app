@@ -7,7 +7,7 @@ export async function amountRule({ amount }) {
   if (amount >= 25000) {
     score = 50;
     flags.push('VERY_LARGE_AMOUNT');        // +50 → pushes into CRITICAL territory alone
-  } else if (amount >= 10000) {
+  } else if (amount >= 20000) {
     score = 35;
     flags.push('LARGE_AMOUNT');
   } else if (amount >= 5000) {

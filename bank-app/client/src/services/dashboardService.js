@@ -13,4 +13,12 @@ export const dashboardService = {
     const qs = new URLSearchParams(clean).toString();
     return api.get(`/dashboard/transactions${qs ? `?${qs}` : ''}`);
   },
+
+  getAccountTransactions: (accountId, params = {}) => {
+    const clean = Object.fromEntries(
+      Object.entries(params).filter(([, v]) => v != null && v !== '')
+    );
+    const qs = new URLSearchParams(clean).toString();
+    return api.get(`/accounts/${accountId}/transactions${qs ? `?${qs}` : ''}`);
+  },
 };

@@ -18,7 +18,8 @@ async function apiFetch(path, options = {}) {
 
   if (res.status === 401) {
     localStorage.removeItem('token');
-    window.location.href = '/';
+    // Full page reload clears all React/Zustand state; expired param shows banner
+    window.location.href = '/?expired=1';
     return null;
   }
 

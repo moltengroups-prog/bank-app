@@ -369,7 +369,11 @@ function AccountDetailsPage() {
             </div>
           </div>
           <InsetDivider color={100} />
-          <button type="button" className="w-full py-4 text-[#1a6bbf] font-bold text-sm tracking-wider">
+          <button
+            type="button"
+            onClick={() => navigate('/account-transactions', { state: { account } })}
+            className="w-full py-4 text-[#1a6bbf] font-bold text-sm tracking-wider active:bg-gray-50"
+          >
             ALL TRANSACTIONS
           </button>
         </div>

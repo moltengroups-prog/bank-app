@@ -6,12 +6,16 @@ import SupportMessage from '../models/SupportMessage.js';
 import AuditLog    from '../models/AuditLog.js';
 import LedgerEntry from '../models/LedgerEntry.js';
 import BillPayment from '../models/BillPayment.js';
+import OTPModel, { hashOTP } from '../models/OTP.js';
 import { createError } from '../middleware/error.js';
 import { getIO } from '../socket/index.js';
 import { createNotification } from '../utils/notify.js';
 import * as engine from '../services/bankingEngine.js';
 import * as audit  from '../services/auditService.js';
 import { AUDIT_ACTIONS } from '../models/AuditLog.js';
+import { generatePersonaHistory } from '../database/generatePersonaHistory.js';
+import { OCCUPATIONS } from '../database/personas/occupations.js';
+import { PERSONALITIES } from '../database/personas/personalities.js';
 
 // ── GET /api/admin/users ──────────────────────────────────────────
 export async function getUsers(req, res, next) {
@@ -111,6 +115,115 @@ export async function getUserById(req, res, next) {
       },
     });
   } catch (err) {
+    next(err);
+  }
+}
+
+// ── POST /api/admin/users/create ─────────────────────────────────
+export async function createAdminUser(req, res, next) {
+  try {
+    const {
+      firstName,
+      lastName,
+      email,
+      password,
+      phoneNumber = null,
+      role = 'user',
+      accounts: accountsInput = [],
+    } = req.body;
+
+    if (!firstName?.trim() || !lastName?.trim() || !email?.trim() || !password) {
+      return next(createError('firstName, lastName, email, and password are required', 400));
+    }
+    if (!['user', 'admin', 'support-agent'].includes(role)) {
+      return next(createError('role must be user, admin, or support-agent', 400));
+    }
+
+    const existing = await User.findOne({ email: email.toLowerCase().trim() });
+    if (existing) return next(createError('A user with that email already exists', 409));
+
+    const user = await User.create({
+      firstName: firstName.trim(),
+      lastName:  lastName.trim(),
+      email:     email.toLowerCase().trim(),
+      password,
+      phoneNumber: phoneNumber?.trim() || null,
+      isVerified:  true,
+      role,
+    });
+
+    const ROUTING = '021000021'; // Bank of Molten routing number
+    const genAcctNum = () => String(Math.floor(1_000_000_000 + Math.random() * 9_000_000_000));
+
+    const ACCOUNT_NAMES = {
+      checking:   'Primary Checking',
+      savings:    'High-Yield Savings',
+      credit:     'Credit Card Account',
+      investment: 'Investment Account',
+    };
+
+    const createdAccounts = [];
+    for (let i = 0; i < accountsInput.length; i++) {
+      const { type, balance = 0 } = accountsInput[i];
+      if (!['checking', 'savings', 'credit', 'investment'].includes(type)) {
+        return next(createError(`Invalid account type: ${type}`, 400));
+      }
+      const parsedBalance = Math.max(0, parseFloat(balance) || 0);
+      const acct = await BankAccount.create({
+        user:             user._id,
+        accountName:      ACCOUNT_NAMES[type],
+        accountType:      type,
+        accountNumber:    genAcctNum(),
+        routingNumber:    ROUTING,
+        balance:          parsedBalance,
+        availableBalance: parsedBalance,
+        isPrimary:        i === 0,
+        status:           'active',
+      });
+      createdAccounts.push(acct);
+    }
+
+    if (createdAccounts.length > 0) {
+      user.accounts = createdAccounts.map((a) => a._id);
+      await user.save();
+    }
+
+    audit.log({
+      actor:      req.user._id,
+      actorEmail: req.user.email,
+      actorRole:  req.user.role,
+      action:     AUDIT_ACTIONS.USER_CREATED,
+      targetUser: user._id,
+      severity:   'medium',
+      metadata:   { role, accountsCreated: createdAccounts.length },
+    }).catch(() => {});
+
+    res.status(201).json({
+      success: true,
+      data: {
+        user: {
+          id:          user._id,
+          firstName:   user.firstName,
+          lastName:    user.lastName,
+          email:       user.email,
+          phoneNumber: user.phoneNumber,
+          role:        user.role,
+          isVerified:  user.isVerified,
+          createdAt:   user.createdAt,
+        },
+        accounts: createdAccounts.map((a, i) => ({
+          id:               a._id,
+          accountName:      a.accountName,
+          accountType:      a.accountType,
+          maskedNumber:     `••••${a.last4}`,
+          balance:          a.balance,
+          availableBalance: a.availableBalance,
+          isPrimary:        i === 0,
+        })),
+      },
+    });
+  } catch (err) {
+    if (err.code === 11000) return next(createError('A user with that email already exists', 409));
     next(err);
   }
 }
@@ -471,7 +584,7 @@ export async function adjustBalance(req, res, next) {
     const result = await engine.applyAdminAdjustment({
       accountId:   req.params.id,
       amount:      signedAmount,
-      description: 'Admin Balance Adjustment',
+      description: reason.trim(),
       reason:      reason.trim(),
       adminId:     req.user._id,
       metadata:    { adjustmentType, initiatedBy: req.user.email },
@@ -480,6 +593,23 @@ export async function adjustBalance(req, res, next) {
     // Audit log
     const account = await BankAccount.findById(req.params.id).populate('user', '_id');
     audit.logBalanceAdjustment({ admin: req.user, account, adjustment: result, reason: reason.trim(), req }).catch(() => {});
+
+    // Emit real-time balance update to the account owner
+    try {
+      const io = getIO();
+      if (io && account?.user?._id) {
+        io.to(`user:${account.user._id}`).emit('notification:new', {
+          title:    'Account Updated',
+          message:  `Your account balance has been updated by ${adjustmentType === 'credit' ? '+' : '-'}$${parsedAmount.toFixed(2)}.`,
+          type:     'info',
+          category: 'account',
+        });
+        io.to(`user:${account.user._id}`).emit('balance:updated', {
+          accountId: req.params.id,
+          newBalance: result.balanceAfter,
+        });
+      }
+    } catch { /* socket may not be ready */ }
 
     res.json({
       success: true,
@@ -714,6 +844,75 @@ export async function getLedgerEntries(req, res, next) {
   }
 }
 
+// ── GET /api/admin/personas ───────────────────────────────────────
+export async function getPersonas(req, res) {
+  res.json({
+    success: true,
+    data: {
+      occupations: OCCUPATIONS.map((o) => ({
+        id:       o.id,
+        label:    o.label,
+        category: o.category,
+        ranks:    o.ranks ?? null,
+        incomeRange: o.incomeRange ?? null,
+        incomeByRank: o.incomeByRank ?? null,
+        defaultRank: o.defaultRank ?? null,
+      })),
+      personalities: PERSONALITIES.map((p) => ({
+        id:          p.id,
+        label:       p.label,
+        description: p.description,
+      })),
+    },
+  });
+}
+
+// ── POST /api/admin/users/:id/generate-history ────────────────────
+export async function generateHistory(req, res, next) {
+  try {
+    const {
+      occupationId,
+      rankOrClass      = 'mid',
+      personalityId    = null,
+      historyStartDate = null,
+      activityIntensity = 1.0,
+      accountOverrides  = {},
+      clearExisting     = false,
+    } = req.body;
+
+    if (!occupationId) return next(createError('occupationId is required', 400));
+
+    const result = await generatePersonaHistory({
+      userId:           req.params.id,
+      occupationId,
+      rankOrClass,
+      personalityId,
+      historyStartDate,
+      activityIntensity: parseFloat(activityIntensity) || 1.0,
+      accountOverrides,
+      clearExisting:    Boolean(clearExisting),
+    });
+
+    audit.log({
+      actor:      req.user._id,
+      actorEmail: req.user.email,
+      actorRole:  req.user.role,
+      action:     'admin.generate_history',
+      targetUser: req.params.id,
+      severity:   'medium',
+      metadata:   { occupationId, personalityId, transactionsInserted: result.transactionsInserted, clearExisting },
+    }).catch(() => {});
+
+    res.json({ success: true, data: result });
+  } catch (err) {
+    if (err.code === 'INVALID_OCCUPATION') return next(createError(err.message, 400));
+    if (err.code === 'USER_NOT_FOUND')     return next(createError(err.message, 404));
+    if (err.code === 'NO_ACCOUNTS')        return next(createError(err.message, 400));
+    if (err.code === 'INVALID_DATE')       return next(createError(err.message, 400));
+    next(err);
+  }
+}
+
 // ── GET /api/admin/analytics/overview ────────────────────────────
 export async function getAnalyticsOverview(req, res, next) {
   try {
@@ -783,6 +982,70 @@ export async function getAnalyticsOverview(req, res, next) {
         dailyVolume:        recentDailyVolume.map((d) => ({ date: d._id, volume: Math.round(d.volume * 100) / 100, count: d.count })),
       },
     });
+  } catch (err) {
+    next(err);
+  }
+}
+
+// ── POST /api/admin/users/:id/issue-otp ───────────────────────────
+// Admin generates a fallback OTP for a locked-out user.
+// The plaintext code is returned ONCE — it is never stored.
+const ADMIN_OTP_EXPIRY_MS = 10 * 60 * 1000; // 10 minutes
+
+export async function adminIssueOTP(req, res, next) {
+  try {
+    const targetUser = await User.findById(req.params.id);
+    if (!targetUser) return next(createError('User not found', 404));
+
+    const code      = String(Math.floor(100000 + Math.random() * 900000));
+    const expiresAt = new Date(Date.now() + ADMIN_OTP_EXPIRY_MS);
+
+    await OTPModel.deleteMany({ user: targetUser._id });
+    await OTPModel.create({
+      user:           targetUser._id,
+      email:          targetUser.email,
+      codeHash:       hashOTP(code),
+      expiresAt,
+      lastSentAt:     new Date(),
+      deliveryMethod: 'admin-issued',
+    });
+
+    audit.logOTPAdminIssued({ admin: req.user, targetUser, req }).catch(() => {});
+
+    createNotification({
+      userId:   targetUser._id,
+      title:    'Verification code issued',
+      message:  'A support agent has issued a sign-in verification code for your account.',
+      type:     'security',
+      category: 'security',
+    }).catch(() => {});
+
+    res.json({
+      success: true,
+      otp: {
+        code,
+        expiresAt,
+        deliveryMethod: 'admin-issued',
+      },
+      targetEmail: targetUser.email,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+// ── DELETE /api/admin/users/:id/otp ───────────────────────────────
+// Admin revokes all pending OTPs for a user (lockout / security response).
+export async function adminRevokeOTP(req, res, next) {
+  try {
+    const targetUser = await User.findById(req.params.id);
+    if (!targetUser) return next(createError('User not found', 404));
+
+    const { deletedCount } = await OTPModel.deleteMany({ user: targetUser._id });
+
+    audit.logOTPRevoked({ admin: req.user, targetUser, req }).catch(() => {});
+
+    res.json({ success: true, deletedCount, targetEmail: targetUser.email });
   } catch (err) {
     next(err);
   }

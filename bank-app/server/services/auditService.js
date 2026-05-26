@@ -479,6 +479,94 @@ export async function logBillPayRefunded({ admin, payment, req }) {
   });
 }
 
+// ── OTP / Auth events ──────────────────────────────────────────────
+
+/** OTP code was generated and sent to a user. */
+export async function logOTPSent({ user, deliveryMethod = 'email', req }) {
+  return log({
+    actor:      user._id,
+    actorEmail: user.email,
+    actorRole:  user.role ?? 'user',
+    action:     AUDIT_ACTIONS.OTP_SENT,
+    targetUser: user._id,
+    severity:   'info',
+    ipAddress:  ip(req),
+    userAgent:  ua(req),
+    metadata:   { deliveryMethod },
+  });
+}
+
+/** OTP verified successfully — full session issued. */
+export async function logOTPVerified({ user, req }) {
+  return log({
+    actor:      user._id,
+    actorEmail: user.email,
+    actorRole:  user.role ?? 'user',
+    action:     AUDIT_ACTIONS.OTP_VERIFIED,
+    targetUser: user._id,
+    severity:   'info',
+    ipAddress:  ip(req),
+    userAgent:  ua(req),
+  });
+}
+
+/** OTP verification attempt failed (wrong code). */
+export async function logOTPFailed({ userId, email, attemptsLeft, req }) {
+  return log({
+    actorEmail: email ?? 'unknown',
+    action:     AUDIT_ACTIONS.OTP_FAILED,
+    targetUser: userId ?? null,
+    severity:   attemptsLeft <= 1 ? 'warning' : 'info',
+    ipAddress:  ip(req),
+    userAgent:  ua(req),
+    metadata:   { attemptsLeft },
+  });
+}
+
+/** OTP code was resent to a user. */
+export async function logOTPResent({ user, req }) {
+  return log({
+    actor:      user._id,
+    actorEmail: user.email,
+    actorRole:  user.role ?? 'user',
+    action:     AUDIT_ACTIONS.OTP_RESENT,
+    targetUser: user._id,
+    severity:   'info',
+    ipAddress:  ip(req),
+    userAgent:  ua(req),
+  });
+}
+
+/** Admin manually issued a fallback OTP for a user. */
+export async function logOTPAdminIssued({ admin, targetUser, req }) {
+  return log({
+    actor:      admin._id,
+    actorEmail: admin.email,
+    actorRole:  admin.role,
+    action:     AUDIT_ACTIONS.OTP_ADMIN_ISSUED,
+    targetUser: targetUser._id,
+    severity:   'warning',
+    ipAddress:  ip(req),
+    userAgent:  ua(req),
+    metadata:   { targetEmail: targetUser.email },
+  });
+}
+
+/** Admin revoked all pending OTPs for a user. */
+export async function logOTPRevoked({ admin, targetUser, req }) {
+  return log({
+    actor:      admin._id,
+    actorEmail: admin.email,
+    actorRole:  admin.role,
+    action:     AUDIT_ACTIONS.OTP_REVOKED,
+    targetUser: targetUser._id,
+    severity:   'warning',
+    ipAddress:  ip(req),
+    userAgent:  ua(req),
+    metadata:   { targetEmail: targetUser.email },
+  });
+}
+
 /** User downloaded/viewed a statement. */
 export async function logStatementDownload({ user, account, period, req }) {
   return log({

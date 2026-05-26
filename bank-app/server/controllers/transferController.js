@@ -237,6 +237,15 @@ export async function crossUserTransfer(req, res, next) {
         fromAccount: `${fromCheck.accountName} ••••${fromCheck.last4}`,
         toAccount: `••••${toCheck.last4}`, timestamp: now,
       });
+
+      // Notify recipient in realtime so their dashboard/activity refreshes immediately
+      io.to(`user:${String(toCheck.user._id)}`).emit('notification:new', {
+        title:    'Transfer received',
+        message:  `You received ${amt} in your account ••••${toCheck.last4}.`,
+        type:     'success',
+        category: 'transfer',
+        metadata: { referenceNumber: engineResult.debitTransaction.referenceNumber, amount: parsedAmount },
+      });
     }
 
     Promise.all([
