@@ -230,7 +230,6 @@ function ActivityTab() {
   const [error,     setError]     = useState('');
   const [page,      setPage]      = useState(1);
   const [total,     setTotal]     = useState(0);
-  const [retrying,  setRetrying]  = useState(null);
   const [toast,     setToast]     = useState(null);
   const limit = 20;
 

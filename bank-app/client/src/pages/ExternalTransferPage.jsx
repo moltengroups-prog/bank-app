@@ -6,7 +6,6 @@ import AmountInputModal from '../components/AmountInputModal';
 import InsetDivider from '../components/InsetDivider';
 import { transferService } from '../services/transferService';
 import { useDashboardStore } from '../store/dashboardStore';
-import { formatBalance } from '../utils/format';
 
 const STEP_FORM    = 'form';
 const STEP_REVIEW  = 'review';
