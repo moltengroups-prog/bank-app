@@ -66,6 +66,11 @@ export const AUDIT_ACTIONS = Object.freeze({
   OTP_ADMIN_ISSUED:      'otp.admin.issued',
   OTP_REVOKED:           'otp.revoked',
 
+  // Admin 2FA PIN
+  ADMIN_2FA_VERIFIED:    'admin.2fa.verified',
+  ADMIN_2FA_FAILED:      'admin.2fa.failed',
+  ADMIN_PIN_RESET:       'admin.pin.reset',
+
   // System
   DATA_EXPORT:           'data.export',
 });

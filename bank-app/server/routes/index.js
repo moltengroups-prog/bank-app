@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import healthRouter          from './health.js';
 import authRouter            from './auth.js';
+import adminAuthRouter       from './adminAuth.js';
 import dashboardRouter       from './dashboard.js';
 import transfersRouter       from './transfers.js';
 import notificationsRouter   from './notifications.js';
@@ -24,6 +25,7 @@ router.use('/health',           healthRouter);
 router.use(requireDB);
 
 router.use('/auth',             authRouter);
+router.use('/admin-auth',       adminAuthRouter);
 router.use('/dashboard',        dashboardRouter);
 router.use('/transfers',        transfersRouter);
 router.use('/notifications',    notificationsRouter);

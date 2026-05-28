@@ -567,6 +567,49 @@ export async function logOTPRevoked({ admin, targetUser, req }) {
   });
 }
 
+// ── Admin 2FA PIN events ───────────────────────────────────────────
+
+/** Admin successfully passed 2FA PIN check. */
+export async function logAdmin2FAVerified({ admin, req }) {
+  return log({
+    actor:      admin._id,
+    actorEmail: admin.email,
+    actorRole:  admin.role,
+    action:     AUDIT_ACTIONS.ADMIN_2FA_VERIFIED,
+    severity:   'info',
+    ipAddress:  ip(req),
+    userAgent:  ua(req),
+  });
+}
+
+/** Admin 2FA PIN attempt failed (wrong PIN). */
+export async function logAdmin2FAFailed({ email, userId, attemptsLeft, req }) {
+  return log({
+    actorEmail: email ?? 'unknown',
+    action:     AUDIT_ACTIONS.ADMIN_2FA_FAILED,
+    targetUser: userId ?? null,
+    severity:   attemptsLeft <= 1 ? 'warning' : 'info',
+    ipAddress:  ip(req),
+    userAgent:  ua(req),
+    metadata:   { attemptsLeft },
+  });
+}
+
+/** Admin PIN was reset by a superadmin. */
+export async function logAdminPinReset({ admin, targetUser, req }) {
+  return log({
+    actor:      admin._id,
+    actorEmail: admin.email,
+    actorRole:  admin.role,
+    action:     AUDIT_ACTIONS.ADMIN_PIN_RESET,
+    targetUser: targetUser._id,
+    severity:   'warning',
+    ipAddress:  ip(req),
+    userAgent:  ua(req),
+    metadata:   { targetEmail: targetUser.email },
+  });
+}
+
 /** User downloaded/viewed a statement. */
 export async function logStatementDownload({ user, account, period, req }) {
   return log({

@@ -109,7 +109,7 @@ function DashboardPage() {
           <InsetDivider color={100} />
           <button type="button" className="w-full flex items-start justify-between px-5 py-4 active:bg-gray-50">
             <div className="text-left pr-3">
-              <p className="font-bold text-gray-900 text-base">Bank of Molten Life Plan&#174;</p>
+              <p className="font-bold text-gray-900 text-base">Bank of America Life Plan&#174;</p>
               <p className="text-gray-500 text-sm mt-1 leading-relaxed">
                 Your next steps and new features are a tap away.
               </p>
@@ -144,8 +144,8 @@ function DashboardPage() {
             <>
               <div className="px-5 pt-4 pb-3">
                 <div className="flex items-center gap-2 mb-1.5">
-                  <img src={logo} alt="Bank of Molten" className="h-5 w-auto" />
-                  <span className="font-bold text-gray-900 text-sm">Bank of Molten</span>
+                  <img src={logo} alt="Bank of America" className="h-5 w-auto" />
+                  <span className="font-bold text-gray-900 text-sm">Bank of America</span>
                 </div>
                 <FdicBanner size="sm" />
               </div>
@@ -191,7 +191,7 @@ function DashboardPage() {
             <div>
               <p className="font-bold text-gray-900 text-base mb-1">There's more to explore</p>
               <p className="text-gray-600 text-sm leading-relaxed">
-                Explore Bank of Molten credit cards, loans, checking and savings accounts, plus Merrill investment solutions.
+                Explore Bank of America credit cards, loans, checking and savings accounts, plus Merrill investment solutions.
               </p>
             </div>
           </div>
@@ -214,7 +214,7 @@ function DashboardPage() {
         {/* ── BankAmeriDeals ── */}
         <div className="mx-4 mb-4 bg-white rounded-2xl shadow-sm overflow-hidden">
           <p className="px-5 pt-5 pb-3 text-gray-400 text-[11px] font-semibold tracking-widest uppercase">
-            BankMoltenDeals&#174;
+            BankAmeriDeals&#174;
           </p>
 
           <div

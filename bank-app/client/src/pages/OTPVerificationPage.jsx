@@ -207,10 +207,6 @@ export default function OTPVerificationPage() {
         </div>
       </div>
 
-      {/* Dev hint */}
-      <p className="text-center text-xs text-gray-400 mt-5 px-6">
-        Check the server terminal for your verification code.
-      </p>
     </div>
   );
 }

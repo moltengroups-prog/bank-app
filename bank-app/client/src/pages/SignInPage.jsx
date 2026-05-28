@@ -59,11 +59,11 @@ function SignInPage() {
     <div className="min-h-screen bg-gray-100 flex flex-col font-sans">
 
       {/* ── Header ── */}
-      <div className="flex items-center justify-between px-5 pt-8 pb-5">
-        <h1 className="text-[22px] font-extrabold tracking-wide text-[#002D72]">
-          BANK OF MOLTEN
+      <div className="flex items-center justify-center px-5 pt-8 pb-5">
+        <h1 className="text-[22px] font-extrabold tracking-wide text-[#002D72] px-4">
+          BANK OF AMERICA
         </h1>
-        <img src={logo} alt="Bank of Molten" className="h-11 w-auto" />
+        <img src={logo} alt="Bank of America" className="h-9 w-auto" />
       </div>
 
       {/* ── Sign-In Card ── */}
@@ -151,7 +151,7 @@ function SignInPage() {
 
       {/* ── FDIC ── */}
       <div className="px-4 pb-5">
-        <FdicBanner label="Bank of Molten deposit products:" />
+        <FdicBanner label="Bank of America deposit products:" />
       </div>
 
       {/* ── Promo Cards 2×2 ── */}
@@ -201,7 +201,7 @@ function SignInPage() {
         </p>
 
         <p className="text-sm text-gray-700 mb-3">
-          Bank of Molten, Merrill, their affiliates and advisors do not provide legal,
+          Bank of America, Merrill, their affiliates and advisors do not provide legal,
           tax or accounting advice. Clients should consult their legal and/or tax advisors
           before making any financial decisions.
         </p>
@@ -213,12 +213,12 @@ function SignInPage() {
         </p>
 
         <p className="text-sm text-gray-700 mb-3">
-          Banking products are provided by Bank of Molten, N.A. ("BANA") and affiliated
+          Banking products are provided by Bank of America, N.A. ("BANA") and affiliated
           banks, Members FDIC and wholly owned subsidiaries of BofM Corp.
         </p>
 
         <button type="button" className="text-[#1a6bbf] text-sm font-medium leading-snug text-left">
-          See additional information about Merrill and Bank of Molten
+          See additional information about Merrill and Bank of America
         </button>
       </div>
 

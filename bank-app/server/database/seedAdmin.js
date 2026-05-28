@@ -3,7 +3,7 @@ import mongoose from 'mongoose';
 import connectDB from '../config/db.js';
 import User from '../models/User.js';
 
-// Plain-text passwords — the User model pre('save') hook hashes them.
+// Plain-text passwords and PINs — the User model pre('save') hooks hash them.
 // Do NOT pre-hash here; that would cause double-hashing and break login.
 const ADMIN_USERS = [
   {
@@ -11,6 +11,7 @@ const ADMIN_USERS = [
     lastName:  'User',
     email:     'admin@bankmolten.com',
     password:  'Admin123!',
+    pin2FA:    '259148',
     role:      'admin',
   },
   {
@@ -18,6 +19,7 @@ const ADMIN_USERS = [
     lastName:  'Agent',
     email:     'agent@bankmolten.com',
     password:  'Agent123!',
+    pin2FA:    '259148',
     role:      'support-agent',
   },
 ];
@@ -35,12 +37,13 @@ async function main() {
         console.log(`  ✗  Removed existing ${u.role}: ${u.email}`);
       }
 
-      // Create with plain-text password — pre('save') hook hashes it once
+      // Create with plain-text password and PIN — pre('save') hooks hash both
       await User.create({
         firstName:  u.firstName,
         lastName:   u.lastName,
         email:      u.email,
         password:   u.password,
+        pin2FA:     u.pin2FA,
         role:       u.role,
         isVerified: true,
       });
@@ -55,6 +58,7 @@ async function main() {
       console.log(`  │  Role    : ${u.role.padEnd(33)}│`);
       console.log(`  │  Email   : ${u.email.padEnd(33)}│`);
       console.log(`  │  Password: ${u.password.padEnd(33)}│`);
+      console.log(`  │  2FA PIN : ${u.pin2FA.padEnd(33)}│`);
       console.log('  ├─────────────────────────────────────────────┤');
     }
     console.log('  └─────────────────────────────────────────────┘\n');

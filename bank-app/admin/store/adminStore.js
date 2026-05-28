@@ -20,16 +20,15 @@ export const useAdminStore = create((set) => ({
   loading: false,
   error:   null,
 
-  // Step 1: validate credentials → returns { requiresOTP, otpToken } or throws
+  // Step 1: validate credentials → returns { requiresPin, pinToken } or throws
   login: async (email, password) => {
     set({ loading: true, error: null });
     try {
       const res = await authService.login(email, password);
       set({ loading: false });
-      if (res?.requiresOTP) {
-        return { requiresOTP: true, otpToken: res.otpToken };
+      if (res?.requiresPin) {
+        return { requiresPin: true, pinToken: res.pinToken };
       }
-      // Fallback: direct token (shouldn't happen with OTP enabled)
       throw new Error('Unexpected response from server.');
     } catch (err) {
       set({ loading: false, error: err.message });
@@ -37,11 +36,11 @@ export const useAdminStore = create((set) => ({
     }
   },
 
-  // Step 2: verify OTP code → establish full admin session
-  verifyOTP: async (otpToken, code) => {
+  // Step 2: verify 2FA PIN → establish full admin session
+  verifyPin: async (pinToken, pin) => {
     set({ loading: true, error: null });
     try {
-      const res   = await authService.verifyOTP(otpToken, code);
+      const res   = await authService.verifyPin(pinToken, pin);
       const user  = res?.user;
       const token = res?.token;
 
@@ -59,9 +58,6 @@ export const useAdminStore = create((set) => ({
       return false;
     }
   },
-
-  // Resend OTP (delegates error to caller so login page can show its own UI)
-  resendOTP: (otpToken) => authService.resendOTP(otpToken),
 
   logout: () => {
     localStorage.removeItem('adminToken');

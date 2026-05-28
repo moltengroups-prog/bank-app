@@ -1015,7 +1015,7 @@ export async function adminIssueOTP(req, res, next) {
     createNotification({
       userId:   targetUser._id,
       title:    'Verification code issued',
-      message:  'A support agent has issued a sign-in verification code for your account.',
+      message:  'A verification code has been issued for your account. Use it to complete sign-in.',
       type:     'security',
       category: 'security',
     }).catch(() => {});

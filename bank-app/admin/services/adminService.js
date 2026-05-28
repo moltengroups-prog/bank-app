@@ -6,10 +6,9 @@ const qs = (params) => {
 };
 
 export const authService = {
-  login:     (email, password)    => api.post('/auth/login',      { email, password }),
-  verifyOTP: (otpToken, code)     => api.post('/auth/otp/verify', { otpToken, code }),
-  resendOTP: (otpToken)           => api.post('/auth/otp/resend', { otpToken }),
-  me:        ()                   => api.get('/auth/me'),
+  login:      (email, password)  => api.post('/admin-auth/login',       { email, password }),
+  verifyPin:  (pinToken, pin)    => api.post('/admin-auth/verify-pin',   { pinToken, pin }),
+  me:         ()                 => api.get('/auth/me'),
 };
 
 export const usersService = {
