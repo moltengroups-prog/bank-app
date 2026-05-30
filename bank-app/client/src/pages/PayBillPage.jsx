@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
 import LegalDisclosure from '../components/LegalDisclosure';
+import TransactionAuthFlow from '../components/TransactionAuthFlow';
 import { api } from '../services/api';
-import { useAuthStore } from '../store/authStore';
 
 // ── helpers ───────────────────────────────────────────────────────
 const fmtUSD = (n) => '$' + Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -35,204 +35,6 @@ const RECURRING_OPTIONS = [
   { value: 'annually',  label: 'Annually' },
 ];
 
-const RESEND_SECS_INIT = 60;
-const OTP_MAX_TRIES    = 5;
-
-// ── OTP step sub-component ────────────────────────────────────────
-function OTPStep({ parsedAmount, payee, onSuccess, onBack }) {
-  const user = useAuthStore((s) => s.user);
-
-  const [billPayOtpToken, setBillPayOtpToken] = useState('');
-  const [requesting,      setRequesting]      = useState(true);
-  const [requestError,    setRequestError]    = useState('');
-  const [digits,          setDigits]          = useState(['', '', '', '', '', '']);
-  const [verifying,       setVerifying]       = useState(false);
-  const [error,           setError]           = useState('');
-  const [resendSecs,      setResendSecs]      = useState(RESEND_SECS_INIT);
-  const [resending,       setResending]       = useState(false);
-  const inputRefs = useRef([]);
-
-  const requestOTP = useCallback(async () => {
-    setRequesting(true);
-    setRequestError('');
-    try {
-      const res = await api.post('/bill-pay/payments/request-otp', {});
-      setBillPayOtpToken(res.billPayOtpToken);
-    } catch (err) {
-      setRequestError(err.message || 'Failed to send verification code.');
-    } finally {
-      setRequesting(false);
-    }
-  }, []);
-
-  useEffect(() => { requestOTP(); }, [requestOTP]);
-
-  useEffect(() => {
-    if (resendSecs <= 0) return;
-    const id = setTimeout(() => setResendSecs((s) => s - 1), 1000);
-    return () => clearTimeout(id);
-  }, [resendSecs]);
-
-  const handleDigitChange = (idx, val) => {
-    const clean = val.replace(/\D/g, '').slice(-1);
-    const next  = [...digits];
-    next[idx]   = clean;
-    setDigits(next);
-    setError('');
-    if (clean && idx < 5) inputRefs.current[idx + 1]?.focus();
-  };
-
-  const handleKeyDown = (idx, e) => {
-    if (e.key === 'Backspace' && !digits[idx] && idx > 0) {
-      inputRefs.current[idx - 1]?.focus();
-    }
-  };
-
-  const handlePaste = (e) => {
-    e.preventDefault();
-    const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
-    if (!pasted) return;
-    const next = ['', '', '', '', '', ''];
-    pasted.split('').forEach((ch, i) => { if (i < 6) next[i] = ch; });
-    setDigits(next);
-    inputRefs.current[Math.min(pasted.length, 5)]?.focus();
-  };
-
-  const code       = digits.join('');
-  const isComplete = code.length === 6;
-
-  const handleVerify = useCallback(async () => {
-    if (!isComplete || verifying || !billPayOtpToken) return;
-    setVerifying(true);
-    setError('');
-    try {
-      await onSuccess(billPayOtpToken, code);
-    } catch (err) {
-      setError(err.message || 'Verification failed. Please try again.');
-      setDigits(['', '', '', '', '', '']);
-      setTimeout(() => inputRefs.current[0]?.focus(), 50);
-    } finally {
-      setVerifying(false);
-    }
-  }, [isComplete, verifying, billPayOtpToken, code, onSuccess]);
-
-  useEffect(() => {
-    if (isComplete && !verifying) handleVerify();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isComplete]);
-
-  const handleResend = async () => {
-    if (resendSecs > 0 || resending) return;
-    setResending(true);
-    try {
-      await requestOTP();
-      setResendSecs(RESEND_SECS_INIT);
-      setDigits(['', '', '', '', '', '']);
-      setTimeout(() => inputRefs.current[0]?.focus(), 80);
-    } finally {
-      setResending(false);
-    }
-  };
-
-  const maskedEmail = user?.email
-    ? user.email.replace(/^(.{2})(.*)(@.*)$/, (_, a, b, c) => a + b.replace(/./g, '•') + c)
-    : 'your email';
-
-  if (requesting) {
-    return (
-      <div className="flex-1 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-10 h-10 border-4 border-[#002D72] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-gray-500 text-sm">Sending verification code…</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (requestError) {
-    return (
-      <div className="flex-1 flex flex-col items-center justify-center px-6 gap-4">
-        <p className="text-red-500 text-sm text-center">{requestError}</p>
-        <button type="button" onClick={requestOTP}
-          className="px-8 py-3 bg-[#002D72] text-white font-bold text-sm tracking-widest rounded-full">
-          TRY AGAIN
-        </button>
-        <button type="button" onClick={onBack} className="text-sm text-gray-400">← Back</button>
-      </div>
-    );
-  }
-
-  return (
-    <div className="flex-1 overflow-y-auto pb-10">
-      <div className="flex flex-col items-center pt-10 px-6 pb-6">
-        <div className="w-16 h-16 rounded-full bg-[#002D72]/10 flex items-center justify-center mb-5">
-          <svg className="w-8 h-8 text-[#002D72]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
-              d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-          </svg>
-        </div>
-        <h2 className="text-[20px] font-bold text-gray-900 text-center mb-2">
-          Verify your payment
-        </h2>
-        <p className="text-[14px] text-gray-500 text-center mb-1">
-          We sent a 6-digit code to <span className="font-semibold text-[#002D72]">{maskedEmail}</span>
-        </p>
-        <p className="text-[12px] text-gray-400 text-center">
-          to confirm your {fmtUSD(parsedAmount)} payment to {payee?.nickname || payee?.name}
-        </p>
-      </div>
-
-      {/* 6-digit boxes */}
-      <div className="flex gap-2 justify-center mb-5 px-6" onPaste={handlePaste}>
-        {digits.map((d, i) => (
-          <input
-            key={i}
-            ref={(el) => { inputRefs.current[i] = el; }}
-            type="text"
-            inputMode="numeric"
-            maxLength={1}
-            value={d}
-            onChange={(e) => handleDigitChange(i, e.target.value)}
-            onKeyDown={(e) => handleKeyDown(i, e)}
-            disabled={verifying}
-            className={[
-              'w-11 h-14 text-center text-xl font-bold rounded-xl border-2 outline-none transition-colors bg-gray-50',
-              d         ? 'border-[#002D72] text-gray-900' : 'border-gray-200 text-gray-400',
-              error     ? 'border-red-400'                  : '',
-              verifying ? 'opacity-50'                       : 'focus:border-[#002D72]',
-            ].join(' ')}
-          />
-        ))}
-      </div>
-
-      {/* Verify button */}
-      <div className="px-6 mb-4">
-        <button type="button" onClick={handleVerify}
-          disabled={!isComplete || verifying}
-          className="w-full bg-[#002D72] text-white font-bold text-sm tracking-widest py-4 rounded-full disabled:opacity-40">
-          {verifying ? 'VERIFYING…' : 'VERIFY & PAY'}
-        </button>
-      </div>
-
-      {error && <p className="text-red-500 text-sm text-center px-6 mb-4">{error}</p>}
-
-      <div className="flex items-center justify-between px-8">
-        <button type="button" onClick={onBack} className="text-sm text-gray-400">← Back</button>
-        {resendSecs > 0 ? (
-          <p className="text-sm text-gray-400">Resend in <span className="font-semibold tabular-nums">{resendSecs}s</span></p>
-        ) : (
-          <button type="button" onClick={handleResend} disabled={resending}
-            className="text-sm font-semibold text-[#1a6bbf] disabled:opacity-50">
-            {resending ? 'Sending…' : 'Resend code'}
-          </button>
-        )}
-      </div>
-      <p className="text-center text-[11px] text-gray-400 mt-5 px-8 leading-snug">
-        Code expires in 5 minutes. Up to {OTP_MAX_TRIES} attempts allowed.
-      </p>
-    </div>
-  );
-}
 
 // ── Main page ─────────────────────────────────────────────────────
 export default function PayBillPage() {
@@ -393,18 +195,21 @@ export default function PayBillPage() {
 
   // ── OTP step ──────────────────────────────────────────────────
   if (step === 'otp') {
+    const payeeName = payee?.nickname || payee?.name || 'Payee';
     return (
-      <div className="flex flex-col h-screen bg-white font-sans">
-        <AppHeader showBackButton title="Payment Details" showSpacer />
-        <div className="flex-1 pt-[64px] flex flex-col">
-          <OTPStep
-            parsedAmount={parsedAmount}
-            payee={payee}
-            onSuccess={handleOTPSuccess}
-            onBack={() => setStep('confirm')}
-          />
-        </div>
-      </div>
+      <TransactionAuthFlow
+        pageTitle="Bill Pay"
+        transactionType="Bill Payment"
+        amount={parsedAmount}
+        recipient={payeeName}
+        fromAccount={selectedAcct?.accountName}
+        onRequestOTP={async () => {
+          const res = await api.post('/bill-pay/payments/request-otp', {});
+          return res.billPayOtpToken;
+        }}
+        onVerify={handleOTPSuccess}
+        onCancel={() => setStep('confirm')}
+      />
     );
   }
 
