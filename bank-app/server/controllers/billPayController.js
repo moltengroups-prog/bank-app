@@ -1,10 +1,13 @@
+import jwt from 'jsonwebtoken';
 import Payee       from '../models/Payee.js';
 import BillPayment from '../models/BillPayment.js';
 import BankAccount from '../models/BankAccount.js';
+import OTPModel, { hashOTP } from '../models/OTP.js';
 import { createNotification } from '../utils/notify.js';
 import { getIO }              from '../socket/index.js';
 import * as engine            from '../services/bankingEngine.js';
 import * as audit             from '../services/auditService.js';
+import { sendOTPEmail }       from '../services/emailService.js';
 
 const round2 = (n) => Math.round(n * 100) / 100;
 
@@ -84,6 +87,47 @@ async function executePayment(payment, payee) {
     payment.failureReason = err.message || 'Payment processing failed';
     await payment.save();
     throw err;
+  }
+}
+
+const BILLPAY_OTP_EXPIRY_MS   = 5 * 60 * 1000;
+const BILLPAY_OTP_MAX_ATTEMPTS = 5;
+
+// ── POST /api/bill-pay/payments/request-otp ───────────────────────
+// Sends a 6-digit OTP before payment submission.
+export async function requestBillPayOTP(req, res, next) {
+  try {
+    const user      = req.user;
+    const code      = String(Math.floor(100000 + Math.random() * 900000));
+    const expiresAt = new Date(Date.now() + BILLPAY_OTP_EXPIRY_MS);
+
+    await OTPModel.deleteMany({ user: user._id });
+
+    const result = await sendOTPEmail({
+      to:            user.email,
+      firstName:     user.firstName,
+      code,
+      expiryMinutes: Math.round(BILLPAY_OTP_EXPIRY_MS / 60000),
+    });
+
+    await OTPModel.create({
+      user:           user._id,
+      email:          user.email,
+      codeHash:       hashOTP(code),
+      expiresAt,
+      lastSentAt:     new Date(),
+      deliveryMethod: result.method === 'terminal' ? 'terminal' : 'email',
+    });
+
+    const billPayOtpToken = jwt.sign(
+      { sub: user._id.toString(), email: user.email, type: 'billpay-otp-session' },
+      process.env.JWT_SECRET,
+      { expiresIn: '10m' }
+    );
+
+    res.json({ success: true, billPayOtpToken });
+  } catch (err) {
+    next(err);
   }
 }
 
@@ -183,7 +227,42 @@ export async function deactivatePayee(req, res, next) {
 export async function schedulePayment(req, res, next) {
   try {
     const userId = req.user._id;
-    const { fromAccountId, payeeId, amount, scheduledDate, memo = '', isRecurring = false, recurringRule = 'once', recurringEndDate } = req.body;
+    const {
+      fromAccountId, payeeId, amount, scheduledDate,
+      memo = '', isRecurring = false, recurringRule = 'once', recurringEndDate,
+      billPayOtpToken, billPayOtpCode,
+    } = req.body;
+
+    // ── OTP verification (mandatory before any payment) ───────────
+    if (!billPayOtpToken || !billPayOtpCode) {
+      return res.status(401).json({ success: false, message: 'Payment verification code is required.' });
+    }
+    let otpDecoded;
+    try {
+      otpDecoded = jwt.verify(billPayOtpToken, process.env.JWT_SECRET);
+    } catch {
+      return res.status(401).json({ success: false, message: 'Verification session expired. Please request a new code.' });
+    }
+    if (otpDecoded.type !== 'billpay-otp-session' || otpDecoded.sub !== String(userId)) {
+      return res.status(401).json({ success: false, message: 'Invalid verification token.' });
+    }
+    const otp = await OTPModel.findOne({ user: userId, used: false }).sort({ createdAt: -1 });
+    if (!otp)                        return res.status(400).json({ success: false, message: 'No pending verification. Please request a new code.' });
+    if (new Date() > otp.expiresAt)  return res.status(400).json({ success: false, message: 'Verification code expired. Please request a new code.' });
+    if (otp.attempts >= BILLPAY_OTP_MAX_ATTEMPTS) return res.status(429).json({ success: false, message: 'Too many attempts. Please request a new code.' });
+    otp.attempts += 1;
+    if (otp.codeHash !== hashOTP(billPayOtpCode.trim())) {
+      await otp.save();
+      const left = BILLPAY_OTP_MAX_ATTEMPTS - otp.attempts;
+      return res.status(400).json({
+        success: false,
+        message: left > 0
+          ? `Incorrect code. ${left} attempt${left === 1 ? '' : 's'} remaining.`
+          : 'Too many incorrect attempts. Please request a new code.',
+      });
+    }
+    otp.used = true;
+    await otp.save();
 
     if (!fromAccountId || !payeeId || amount == null || !scheduledDate) {
       return res.status(400).json({ success: false, message: 'fromAccountId, payeeId, amount, and scheduledDate are required.' });

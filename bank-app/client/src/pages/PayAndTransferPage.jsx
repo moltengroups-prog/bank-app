@@ -6,7 +6,7 @@ import AppHeader from '../components/AppHeader';
 import BottomNavigation from '../components/BottomNavigation';
 import EricaSearchBar from '../components/EricaSearchBar';
 import ActivityDetailsPage from './ActivityDetailsPage';
-import BillPayEnrollModal from '../components/BillPayEnrollModal';
+import BillPayRecipientsPanel from '../components/BillPayRecipientsPanel';
 import { dashboardService } from '../services/dashboardService';
 import { toActivityDetailPayload } from '../utils/format';
 
@@ -167,10 +167,9 @@ function PayAndTransferPage() {
 
       <BottomNavigation activeTab="pay-transfer" />
 
-      <BillPayEnrollModal
+      <BillPayRecipientsPanel
         isOpen={billPayOpen}
         onClose={() => setBillPayOpen(false)}
-        onContinue={() => { setBillPayOpen(false); navigate('/bill-pay'); }}
       />
 
       {/* ── Transaction detail modal ── */}

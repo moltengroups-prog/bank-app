@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { protect } from '../middleware/auth.js';
 import {
+  requestBillPayOTP,
   addPayee,
   getPayees,
   getPayee,
@@ -12,6 +13,7 @@ import {
   getPayment,
   cancelPayment,
 } from '../controllers/billPayController.js';
+import { authLimiter } from '../middleware/rateLimiter.js';
 
 const router = Router();
 
@@ -24,7 +26,8 @@ router.get   ('/payees/:id',  getPayee);
 router.patch ('/payees/:id',  updatePayee);
 router.delete('/payees/:id',  deactivatePayee);
 
-// Payments
+// Payments — static paths before /:id
+router.post('/payments/request-otp',  authLimiter, requestBillPayOTP);
 router.post('/payments',              schedulePayment);
 router.get ('/payments/upcoming',     getUpcomingPayments);
 router.get ('/payments',              getPayments);
