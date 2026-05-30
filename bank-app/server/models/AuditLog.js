@@ -71,6 +71,11 @@ export const AUDIT_ACTIONS = Object.freeze({
   ADMIN_2FA_FAILED:      'admin.2fa.failed',
   ADMIN_PIN_RESET:       'admin.pin.reset',
 
+  // Wire transfer OTP
+  WIRE_OTP_SENT:         'wire.otp.sent',
+  WIRE_OTP_VERIFIED:     'wire.otp.verified',
+  WIRE_OTP_FAILED:       'wire.otp.failed',
+
   // System
   DATA_EXPORT:           'data.export',
 });

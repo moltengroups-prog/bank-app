@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import AppHeader from '../components/AppHeader';
 import InsetDivider from '../components/InsetDivider';
 import { useWireRecipientsStore } from '../store/wireRecipientsStore';
-import { api } from '../services/api';
 
 const WIRE_FEE = 30;
 
@@ -30,9 +29,8 @@ function WireReviewPage() {
   const selectedFromAccount = useWireRecipientsStore((s) => s.selectedFromAccount);
   const amount              = useWireRecipientsStore((s) => s.amount);
   const memo                = useWireRecipientsStore((s) => s.memo);
-  const setWireResult       = useWireRecipientsStore((s) => s.setWireResult);
 
-  const [submitting, setSubmitting] = useState(false);
+  const [authorized, setAuthorized] = useState(false);
   const [error, setError]           = useState('');
 
   useEffect(() => {
@@ -52,35 +50,12 @@ function WireReviewPage() {
     selectedRecipient.businessName,
   ].filter(Boolean).join(' ') || 'Recipient';
 
-  const handleSubmit = async () => {
-    if (submitting) return;
-    setSubmitting(true);
-    setError('');
-
-    try {
-      const res = await api.post('/wire-transfers', {
-        fromAccountId: selectedFromAccount.id   || selectedFromAccount._id,
-        recipientId:   selectedRecipient._id    || selectedRecipient.id,
-        amount:        parsedAmount,
-        memo:          (memo || '').trim(),
-      });
-
-      setWireResult({
-        referenceNumber: res.data?.referenceNumber || res.referenceNumber || '—',
-        amount:          parsedAmount,
-        fee:             WIRE_FEE,
-        total,
-        pendingReview:   res.pendingReview || false,
-        recipientName,
-        fromAccountName: selectedFromAccount.accountName,
-        submittedAt:     new Date(),
-      });
-
-      navigate('/wire-transfer/success');
-    } catch (err) {
-      setError(err.message || 'Something went wrong. Please try again.');
-      setSubmitting(false);
+  const handleProceedToOTP = () => {
+    if (!authorized) {
+      setError('Please authorize this transfer before proceeding.');
+      return;
     }
+    navigate('/wire-transfer/otp');
   };
 
   return (
@@ -163,6 +138,25 @@ function WireReviewPage() {
 
         </div>
 
+        {/* ── Authorization checkbox ── */}
+        <div
+          className="mx-4 mt-2 mb-4 flex items-start gap-3 cursor-pointer"
+          onClick={() => { setAuthorized(!authorized); setError(''); }}
+        >
+          <div className={`w-5 h-5 rounded border-2 flex-shrink-0 mt-0.5 flex items-center justify-center transition-colors ${
+            authorized ? 'bg-[#002D72] border-[#002D72]' : 'bg-white border-gray-400'
+          }`}>
+            {authorized && (
+              <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+              </svg>
+            )}
+          </div>
+          <p className="text-[13px] text-gray-600 leading-snug">
+            I authorize this payment &amp; have read and agree to the transfer terms, including exchange rate, fees &amp; taxes.
+          </p>
+        </div>
+
         {/* ── Error banner ── */}
         {error && (
           <div className="mx-4 px-4 py-3 bg-red-50 border border-red-200 rounded-xl">
@@ -180,15 +174,15 @@ function WireReviewPage() {
             onClick={() => navigate(-1)}
             className="flex-1 py-4 bg-white border-2 border-[#002D72] text-[#002D72] font-bold text-sm tracking-widest rounded-full active:bg-gray-50"
           >
-            BACK
+            CANCEL
           </button>
           <button
             type="button"
-            onClick={handleSubmit}
-            disabled={submitting}
+            onClick={handleProceedToOTP}
+            disabled={!authorized}
             className="flex-1 py-4 bg-[#002D72] text-white font-bold text-sm tracking-widest rounded-full disabled:opacity-40 active:bg-[#001d4a] transition-colors"
           >
-            {submitting ? 'SENDING…' : 'SEND WIRE'}
+            SEND
           </button>
         </div>
       </div>

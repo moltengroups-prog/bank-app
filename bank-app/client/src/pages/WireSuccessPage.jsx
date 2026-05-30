@@ -82,7 +82,7 @@ function WireSuccessPage() {
 
   const handleDone = () => {
     fetchAccounts();
-    navigate('/pay-transfer', { replace: true });
+    navigate('/wire-transfer/activity', { replace: true });
   };
 
   return (

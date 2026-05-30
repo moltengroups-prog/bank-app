@@ -1,19 +1,64 @@
+import jwt from 'jsonwebtoken';
 import WireTransfer  from '../models/WireTransfer.js';
 import WireRecipient from '../models/WireRecipient.js';
 import BankAccount   from '../models/BankAccount.js';
+import OTPModel, { hashOTP } from '../models/OTP.js';
 import { evaluateTransfer }      from '../fraud/engine.js';
 import * as engine               from '../services/bankingEngine.js';
 import * as audit                from '../services/auditService.js';
 import { createNotification }    from '../utils/notify.js';
 import { getIO }                 from '../socket/index.js';
+import { sendOTPEmail }          from '../services/emailService.js';
 
 const round2 = (n) => Math.round(n * 100) / 100;
 
 // Wire fee charged to sender on every executed wire (blocked/pending wires are not charged).
 const WIRE_FEE = 30;
+const WIRE_OTP_EXPIRY_MS  = 5 * 60 * 1000; // 5 minutes
+const WIRE_OTP_MAX_ATTEMPTS = 5;
 
 function recipientName(r) {
   return [r.firstName, r.lastName, r.businessName].filter(Boolean).join(' ') || 'Recipient';
+}
+
+// ── POST /api/wire-transfers/request-otp ─────────────────────────
+// Sends a 6-digit OTP to the user's email before wire submission.
+export async function requestWireOTP(req, res, next) {
+  try {
+    const user      = req.user;
+    const code      = String(Math.floor(100000 + Math.random() * 900000));
+    const expiresAt = new Date(Date.now() + WIRE_OTP_EXPIRY_MS);
+
+    await OTPModel.deleteMany({ user: user._id });
+
+    const result = await sendOTPEmail({
+      to:            user.email,
+      firstName:     user.firstName,
+      code,
+      expiryMinutes: Math.round(WIRE_OTP_EXPIRY_MS / 60000),
+    });
+
+    await OTPModel.create({
+      user:           user._id,
+      email:          user.email,
+      codeHash:       hashOTP(code),
+      expiresAt,
+      lastSentAt:     new Date(),
+      deliveryMethod: result.method === 'terminal' ? 'terminal' : 'email',
+    });
+
+    const wireOtpToken = jwt.sign(
+      { sub: user._id.toString(), email: user.email, type: 'wire-otp-session' },
+      process.env.JWT_SECRET,
+      { expiresIn: '10m' }
+    );
+
+    audit.logWireOTPSent({ user, req }).catch(() => {});
+
+    res.json({ success: true, wireOtpToken });
+  } catch (err) {
+    next(err);
+  }
 }
 
 // ── User endpoints ────────────────────────────────────────────────
@@ -22,7 +67,55 @@ function recipientName(r) {
 export async function submitWire(req, res, next) {
   try {
     const userId = req.user._id;
-    const { fromAccountId, recipientId, amount, memo = '' } = req.body;
+    const { fromAccountId, recipientId, amount, memo = '', wireOtpToken, wireOtpCode } = req.body;
+
+    // ── OTP verification (mandatory before any wire submission) ───
+    if (!wireOtpToken || !wireOtpCode) {
+      return res.status(401).json({
+        success: false,
+        message: 'Transfer verification code is required.',
+      });
+    }
+
+    let otpDecoded;
+    try {
+      otpDecoded = jwt.verify(wireOtpToken, process.env.JWT_SECRET);
+    } catch {
+      return res.status(401).json({ success: false, message: 'Verification session expired. Please request a new code.' });
+    }
+
+    if (otpDecoded.type !== 'wire-otp-session' || otpDecoded.sub !== String(userId)) {
+      return res.status(401).json({ success: false, message: 'Invalid verification token.' });
+    }
+
+    const otp = await OTPModel.findOne({ user: userId, used: false }).sort({ createdAt: -1 });
+    if (!otp) {
+      return res.status(400).json({ success: false, message: 'No pending verification. Please request a new code.' });
+    }
+    if (new Date() > otp.expiresAt) {
+      return res.status(400).json({ success: false, message: 'Verification code expired. Please request a new code.' });
+    }
+    if (otp.attempts >= WIRE_OTP_MAX_ATTEMPTS) {
+      return res.status(429).json({ success: false, message: 'Too many attempts. Please request a new code.' });
+    }
+
+    otp.attempts += 1;
+
+    if (otp.codeHash !== hashOTP(wireOtpCode.trim())) {
+      await otp.save();
+      const left = WIRE_OTP_MAX_ATTEMPTS - otp.attempts;
+      audit.logWireOTPFailed({ userId, email: req.user.email, attemptsLeft: left, req }).catch(() => {});
+      return res.status(400).json({
+        success: false,
+        message: left > 0
+          ? `Incorrect code. ${left} attempt${left === 1 ? '' : 's'} remaining.`
+          : 'Too many incorrect attempts. Please request a new code.',
+      });
+    }
+
+    otp.used = true;
+    await otp.save();
+    audit.logWireOTPVerified({ user: req.user, req }).catch(() => {});
 
     if (!fromAccountId || !recipientId || amount == null) {
       return res.status(400).json({

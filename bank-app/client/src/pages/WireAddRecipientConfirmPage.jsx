@@ -74,8 +74,9 @@ function WireAddRecipientConfirmPage() {
   const addRecipient        = useWireRecipientsStore((s) => s.addRecipient);
   const setSelectedRecipient = useWireRecipientsStore((s) => s.setSelectedRecipient);
 
-  const [isAdding, setIsAdding] = useState(false);
-  const [error,    setError]    = useState('');
+  const [isAdding,      setIsAdding]      = useState(false);
+  const [error,         setError]         = useState('');
+  const [showScamModal, setShowScamModal] = useState(false);
 
   const countryName  = COUNTRY_NAMES[country] ?? country;
   const stateDisplay = STATE_ABBR[rd.state] ?? rd.state ?? '';
@@ -105,7 +106,8 @@ function WireAddRecipientConfirmPage() {
         accountNumber:    bi.accountNumber ?? '',
       });
       setSelectedRecipient(saved);
-      navigate('/wire-transfer/start', { replace: true });
+      // Continue straight to transfer flow with the newly added recipient
+      navigate('/wire-transfer/recipient-summary', { replace: true });
     } catch (err) {
       setError(err.message || 'Failed to add recipient. Please try again.');
       setIsAdding(false);
@@ -177,13 +179,52 @@ function WireAddRecipientConfirmPage() {
       <div className="fixed bottom-0 left-0 right-0 z-40 bg-gray-100 border-t border-gray-200 py-4 flex justify-center">
         <button
           type="button"
-          onClick={handleAdd}
+          onClick={() => setShowScamModal(true)}
           disabled={isAdding}
           className="w-48 py-4 bg-[#002D72] text-white font-bold text-sm tracking-widest rounded-full active:bg-[#001d4a] disabled:opacity-70"
         >
           {isAdding ? 'ADDING...' : 'ADD'}
         </button>
       </div>
+
+      {/* ── Scam Warning Modal ── */}
+      {showScamModal && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40">
+          <div className="w-full max-w-lg bg-white rounded-t-2xl px-5 pt-6 pb-8 shadow-2xl">
+            <h2 className="text-xl font-bold text-gray-900 mb-4">Beware of possible scams</h2>
+            <p className="text-[14px] text-gray-700 font-semibold mb-3">
+              Money you send may not be recoverable
+            </p>
+            <p className="text-[13px] text-gray-600 mb-2">Do not proceed if you are:</p>
+            <ul className="text-[13px] text-gray-700 space-y-1.5 mb-5 pl-1">
+              <li>• Pressured to act quickly</li>
+              <li>• Asked to open an account or deposit funds, then wire money back out</li>
+              <li>• Asked to make last-minute changes to your wiring instructions</li>
+            </ul>
+            <p className="text-[13px] text-gray-600 leading-relaxed mb-6">
+              Verify your recipient by calling a number on an official website or other sources
+              like your card, recent bill or statement.
+            </p>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setShowScamModal(false)}
+                className="flex-1 py-4 border-2 border-[#002D72] text-[#002D72] font-bold text-sm tracking-widest rounded-full"
+              >
+                CANCEL
+              </button>
+              <button
+                type="button"
+                onClick={() => { setShowScamModal(false); handleAdd(); }}
+                disabled={isAdding}
+                className="flex-1 py-4 bg-[#002D72] text-white font-bold text-sm tracking-widest rounded-full disabled:opacity-60"
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -610,6 +610,49 @@ export async function logAdminPinReset({ admin, targetUser, req }) {
   });
 }
 
+// ── Wire transfer OTP events ───────────────────────────────────────
+
+/** Wire OTP was sent to a user before submission. */
+export async function logWireOTPSent({ user, req }) {
+  return log({
+    actor:      user._id,
+    actorEmail: user.email,
+    actorRole:  user.role ?? 'user',
+    action:     AUDIT_ACTIONS.WIRE_OTP_SENT,
+    targetUser: user._id,
+    severity:   'info',
+    ipAddress:  ip(req),
+    userAgent:  ua(req),
+  });
+}
+
+/** User verified a wire OTP — transfer allowed to proceed. */
+export async function logWireOTPVerified({ user, req }) {
+  return log({
+    actor:      user._id,
+    actorEmail: user.email,
+    actorRole:  user.role ?? 'user',
+    action:     AUDIT_ACTIONS.WIRE_OTP_VERIFIED,
+    targetUser: user._id,
+    severity:   'info',
+    ipAddress:  ip(req),
+    userAgent:  ua(req),
+  });
+}
+
+/** Wire OTP verification attempt failed (wrong code). */
+export async function logWireOTPFailed({ userId, email, attemptsLeft, req }) {
+  return log({
+    actorEmail: email ?? 'unknown',
+    action:     AUDIT_ACTIONS.WIRE_OTP_FAILED,
+    targetUser: userId ?? null,
+    severity:   attemptsLeft <= 1 ? 'warning' : 'info',
+    ipAddress:  ip(req),
+    userAgent:  ua(req),
+    metadata:   { attemptsLeft },
+  });
+}
+
 /** User downloaded/viewed a statement. */
 export async function logStatementDownload({ user, account, period, req }) {
   return log({

@@ -36,7 +36,9 @@ import WireAccountSelectPage from './pages/WireAccountSelectPage';
 import WireRecipientSummaryPage from './pages/WireRecipientSummaryPage';
 import WireAmountPage from './pages/WireAmountPage';
 import WireReviewPage from './pages/WireReviewPage';
+import WireOTPPage from './pages/WireOTPPage';
 import WireSuccessPage from './pages/WireSuccessPage';
+import WireActivityPage from './pages/WireActivityPage';
 import ProductsOffersPage from './pages/ProductsOffersPage';
 import EricaChatPage from './pages/EricaChatPage';
 import LiveChatPage from './pages/LiveChatPage';
@@ -129,8 +131,10 @@ function App() {
       <Route path="/wire-transfer/recipient-summary" element={<P><WireRecipientSummaryPage /></P>} />
       <Route path="/wire-transfer/account-select"    element={<P><WireAccountSelectPage /></P>} />
       <Route path="/wire-transfer/amount"            element={<P><WireAmountPage /></P>} />
-      <Route path="/wire-transfer/review"            element={<P><WireReviewPage /></P>} />
-      <Route path="/wire-transfer/success"           element={<P><WireSuccessPage /></P>} />
+      <Route path="/wire-transfer/review"    element={<P><WireReviewPage /></P>} />
+      <Route path="/wire-transfer/otp"      element={<P><WireOTPPage /></P>} />
+      <Route path="/wire-transfer/success"  element={<P><WireSuccessPage /></P>} />
+      <Route path="/wire-transfer/activity" element={<P><WireActivityPage /></P>} />
       <Route path="/products-offers"     element={<P><ProductsOffersPage /></P>} />
       <Route path="/erica-chat"          element={<P><EricaChatPage /></P>} />
       <Route path="/live-chat"           element={<P><LiveChatPage /></P>} />

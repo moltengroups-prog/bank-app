@@ -1,7 +1,8 @@
 import { Router } from 'express';
 import { protect } from '../middleware/auth.js';
-import { wireLimiter } from '../middleware/rateLimiter.js';
+import { wireLimiter, authLimiter } from '../middleware/rateLimiter.js';
 import {
+  requestWireOTP,
   submitWire,
   listWires,
   getWire,
@@ -11,8 +12,9 @@ const router = Router();
 
 router.use(protect);
 
-router.post('/',    wireLimiter, submitWire);
-router.get('/',     listWires);
-router.get('/:id',  getWire);
+router.post('/request-otp', authLimiter, requestWireOTP);
+router.post('/',            wireLimiter, submitWire);
+router.get('/',             listWires);
+router.get('/:id',          getWire);
 
 export default router;
