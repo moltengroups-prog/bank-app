@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 
 const PAYEE_CATEGORIES = [
-  'utility', 'credit-card', 'mortgage', 'phone', 'insurance',
+  'utility', 'internet', 'credit-card', 'mortgage', 'phone', 'insurance',
   'auto', 'student-loan', 'medical', 'subscription', 'government',
   'rent', 'other',
 ];
