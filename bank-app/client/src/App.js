@@ -19,6 +19,7 @@ import CommunicationsPage from './pages/CommunicationsPage';
 import StatementsAndDocumentsPage from './pages/StatementsAndDocumentsPage';
 import GoPaperlessPage from './pages/GoPaperlessPage';
 import SecurityCenterPage from './pages/SecurityCenterPage';
+import SecurityAlertPage  from './pages/SecurityAlertPage';
 import BillPayPage from './pages/BillPayPage';
 import AddPayeePage from './pages/AddPayeePage';
 import CompanyPayeePage from './pages/CompanyPayeePage';
@@ -114,7 +115,8 @@ function App() {
       <Route path="/communications"      element={<P><CommunicationsPage /></P>} />
       <Route path="/statements-documents" element={<P><StatementsAndDocumentsPage /></P>} />
       <Route path="/go-paperless"        element={<P><GoPaperlessPage /></P>} />
-      <Route path="/security-center"     element={<P><SecurityCenterPage /></P>} />
+      <Route path="/security-center"      element={<P><SecurityCenterPage /></P>} />
+      <Route path="/security-alert"       element={<P><SecurityAlertPage /></P>} />
       <Route path="/bill-pay"            element={<P><BillPayPage /></P>} />
       <Route path="/add-payee"           element={<P><AddPayeePage /></P>} />
       <Route path="/company-payee"       element={<P><CompanyPayeePage /></P>} />

@@ -9,9 +9,10 @@ import adminRouter           from './admin.js';
 import supportRouter         from './support.js';
 import wireRecipientsRouter  from './wireRecipients.js';
 import wireTransfersRouter   from './wireTransfers.js';
-import billPayRouter         from './billPay.js';
-import accountsRouter        from './accounts.js';
-import { requireDB }         from '../middleware/requireDB.js';
+import billPayRouter          from './billPay.js';
+import accountsRouter         from './accounts.js';
+import securityAlertsRouter   from './securityAlerts.js';
+import { requireDB }          from '../middleware/requireDB.js';
 
 const router = Router();
 
@@ -33,8 +34,9 @@ router.use('/admin',            adminRouter);
 router.use('/support',          supportRouter);
 router.use('/wire-recipients',  wireRecipientsRouter);
 router.use('/wire-transfers',   wireTransfersRouter);
-router.use('/bill-pay',         billPayRouter);
-router.use('/accounts',         accountsRouter);
+router.use('/bill-pay',          billPayRouter);
+router.use('/accounts',          accountsRouter);
+router.use('/security-alerts',   securityAlertsRouter);
 
 // ── Future routes (uncomment as each feature is built) ───────────
 // import authRouter          from './auth.js'; // done

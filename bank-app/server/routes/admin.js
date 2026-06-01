@@ -29,6 +29,15 @@ import {
   adminRefundPayment,
 } from '../controllers/billPayController.js';
 import {
+  adminListAlerts,
+  adminGetAlert,
+  adminCreateAlert,
+  adminUpdateAlert,
+  adminActivateAlert,
+  adminDeactivateAlert,
+  adminResolveAlert,
+} from '../controllers/securityAlertController.js';
+import {
   getPendingFraud,
   getFraudHistory,
   getFraudStats,
@@ -108,5 +117,14 @@ router.get ('/bill-pay/payments',                adminGetPayments);
 router.get ('/bill-pay/payments/failed',         adminGetFailedPayments);
 router.post('/bill-pay/payments/:id/retry',      adminOnly, adminRetryPayment);
 router.post('/bill-pay/payments/:id/refund',     adminOnly, adminRefundPayment);
+
+// ── Security alerts (read: both | mutations: admin only) ──────────
+router.get ('/security-alerts',                       adminListAlerts);
+router.get ('/security-alerts/:id',                   adminGetAlert);
+router.post('/security-alerts',                       adminOnly, adminCreateAlert);
+router.patch('/security-alerts/:id',                  adminOnly, adminUpdateAlert);
+router.post('/security-alerts/:id/activate',          adminOnly, adminActivateAlert);
+router.post('/security-alerts/:id/deactivate',        adminOnly, adminDeactivateAlert);
+router.post('/security-alerts/:id/resolve',           adminOnly, adminResolveAlert);
 
 export default router;

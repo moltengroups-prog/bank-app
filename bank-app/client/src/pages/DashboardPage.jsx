@@ -18,6 +18,8 @@ import { useNotificationStore } from '../store/notificationStore';
 import { formatBalance } from '../utils/format';
 import { onNewNotification } from '../socket/notificationSocket';
 import { getSocket } from '../socket/socket';
+import SecurityAlertBanner from '../components/SecurityAlertBanner';
+import { api } from '../services/api';
 
 const deals = [
   { logo: imgAdidas, name: 'Adidas',      cashback: '5% Cash Back' },
@@ -48,9 +50,15 @@ function DashboardPage() {
   const unreadCount     = useNotificationStore((s) => s.unreadCount);
   const fetchUnreadCount = useNotificationStore((s) => s.fetchUnreadCount);
 
+  // Security alerts — persisted server-side; only disappear when admin resolves
+  const [securityAlerts, setSecurityAlerts] = useState([]);
+
   useEffect(() => {
     fetchAccounts();
     fetchUnreadCount();
+    api.get('/security-alerts/active')
+      .then((res) => setSecurityAlerts(res?.data || []))
+      .catch(() => {});
   // Zustand methods are stable references — safe to list as deps
   }, [fetchAccounts, fetchUnreadCount]);
 
@@ -61,17 +69,32 @@ function DashboardPage() {
     });
   }, [refreshAccounts]);
 
-  // Direct balance update from admin adjustments and wire settlements
+  // Direct balance update from admin adjustments, wire settlements, and security alerts
   useEffect(() => {
     const s = getSocket();
     if (!s) return;
     const onBalanceUpdated = () => refreshAccounts();
     const onWireSettled    = () => refreshAccounts();
-    s.on('balance:updated', onBalanceUpdated);
-    s.on('wire:settled',    onWireSettled);
+    // Admin pushed a new security alert — add it to the banner list
+    const onSecurityAlert  = (data) => {
+      setSecurityAlerts((prev) => {
+        if (prev.some((a) => String(a._id) === String(data.alertId))) return prev;
+        return [{ _id: data.alertId, severity: data.severity, title: data.title, message: data.message, status: 'active', requiresChatResolution: true }, ...prev];
+      });
+    };
+    // Admin resolved or deactivated — remove from banner
+    const onAlertRemoved   = ({ alertId }) => {
+      setSecurityAlerts((prev) => prev.filter((a) => String(a._id) !== String(alertId)));
+    };
+    s.on('balance:updated',       onBalanceUpdated);
+    s.on('wire:settled',          onWireSettled);
+    s.on('security:alert:new',    onSecurityAlert);
+    s.on('security:alert:removed', onAlertRemoved);
     return () => {
-      s.off('balance:updated', onBalanceUpdated);
-      s.off('wire:settled',    onWireSettled);
+      s.off('balance:updated',       onBalanceUpdated);
+      s.off('wire:settled',          onWireSettled);
+      s.off('security:alert:new',    onSecurityAlert);
+      s.off('security:alert:removed', onAlertRemoved);
     };
   // getSocket() returns a module-level singleton; no deps needed
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -95,6 +118,9 @@ function DashboardPage() {
           SCROLLABLE BODY
       ══════════════════════════════════ */}
       <div className="flex-1 overflow-y-auto pt-[104px] pb-20">
+
+        {/* Security alert banner — shown above everything else when active */}
+        <SecurityAlertBanner alerts={securityAlerts} />
 
         <EricaSearchBar ericaCount={2} bgWhite={false} />
 

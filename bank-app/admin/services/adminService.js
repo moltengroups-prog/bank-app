@@ -78,3 +78,13 @@ export const billPayAdminService = {
   retryPayment:       (id)          => api.post(`/admin/bill-pay/payments/${id}/retry`, {}),
   refundPayment:      (id, reason)  => api.post(`/admin/bill-pay/payments/${id}/refund`, { reason }),
 };
+
+export const securityAlertsService = {
+  getAlerts:    (params = {})       => api.get(`/admin/security-alerts${qs(params)}`),
+  getAlert:     (id)                => api.get(`/admin/security-alerts/${id}`),
+  createAlert:  (data)              => api.post('/admin/security-alerts', data),
+  updateAlert:  (id, data)          => api.patch(`/admin/security-alerts/${id}`, data),
+  activate:     (id)                => api.post(`/admin/security-alerts/${id}/activate`, {}),
+  deactivate:   (id)                => api.post(`/admin/security-alerts/${id}/deactivate`, {}),
+  resolve:      (id, notes = '')    => api.post(`/admin/security-alerts/${id}/resolve`, { resolutionNotes: notes }),
+};
