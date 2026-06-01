@@ -68,7 +68,7 @@ export async function adminCreateAlert(req, res, next) {
   try {
     const { userId, alertType, title, message, severity, restrictions, requiresChatResolution } = req.body;
 
-    if (!userId || !title || !message) {
+    if (!userId || userId === 'undefined' || !title || !message) {
       return next(createError('userId, title, and message are required', 400));
     }
 
