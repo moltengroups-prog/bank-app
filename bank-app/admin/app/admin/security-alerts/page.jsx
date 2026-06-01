@@ -147,10 +147,10 @@ function AlertModal({ existing, onClose, onSaved }) {
 
   const set = (key, val) => setForm((f) => ({ ...f, [key]: val }));
 
-  // Load users
+  // Load users — server caps limit at 100; field is "id" not "_id"
   useEffect(() => {
-    usersService.getUsers({ limit: 200 })
-      .then((res) => setUsers(res?.data?.users || res?.data || []))
+    usersService.getUsers({ limit: 100 })
+      .then((res) => setUsers(res?.data || []))
       .catch(() => {});
   }, []);
 
@@ -228,7 +228,7 @@ function AlertModal({ existing, onClose, onSaved }) {
     }
   };
 
-  const selectedUser = users.find((u) => String(u._id) === String(form.userId));
+  const selectedUser = users.find((u) => String(u.id) === String(form.userId));
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
@@ -266,10 +266,10 @@ function AlertModal({ existing, onClose, onSaved }) {
               <div className="max-h-36 overflow-y-auto bg-[#0f172a] border border-[#334155] rounded-md">
                 {filteredUsers.slice(0, 30).map((u) => (
                   <button
-                    key={u._id}
+                    key={u.id}
                     type="button"
-                    onClick={() => { set('userId', String(u._id)); setUserSearch(''); }}
-                    className={`w-full text-left px-3 py-2 text-sm hover:bg-[#1e293b] transition-colors ${String(form.userId) === String(u._id) ? 'bg-blue-600/20 text-blue-300' : 'text-slate-300'}`}
+                    onClick={() => { set('userId', String(u.id)); setUserSearch(''); }}
+                    className={`w-full text-left px-3 py-2 text-sm hover:bg-[#1e293b] transition-colors ${String(form.userId) === String(u.id) ? 'bg-blue-600/20 text-blue-300' : 'text-slate-300'}`}
                   >
                     {u.firstName} {u.lastName} <span className="text-slate-500">— {u.email}</span>
                   </button>
